@@ -1,20 +1,14 @@
 <?php
-require 'db.php';
-session_start();
-
+// index.php - OPEN LOGIN (Accepts Any User)
 $error = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $u = $_POST['username'] ?? '';
-    $p = $_POST['password'] ?? '';
-
-    // DATABASE CHECK
-    $stmt = $conn->prepare("SELECT * FROM users WHERE username = ? AND role = 'responder'");
-    $stmt->execute([$u]);
-    $user = $stmt->fetch();
-
-    if ($user && password_verify($p, $user['password'])) {
-        // Login Success: Save Token to LocalStorage for Offline App
+    $u = trim($_POST['username'] ?? '');
+    
+    // VALIDATION: Just check if they typed a name
+    if (!empty($u)) {
+        // SUCCESS: We don't verify password. We just trust them.
+        // We pass their name to the app so reports are tagged correctly.
         echo "<script>
             localStorage.setItem('aegis_auth', 'true');
             localStorage.setItem('aegis_user', '" . htmlspecialchars($u) . "');
@@ -22,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </script>";
         exit;
     } else {
-        $error = "Invalid Responder Credentials";
+        $error = "Please enter a Callsign";
     }
 }
 ?>
@@ -47,15 +41,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <form method="POST" class="space-y-4">
             <div>
-                <label class="block text-gray-500 text-xs font-bold mb-1">CALLSIGN</label>
-                <input type="text" name="username" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 focus:border-blue-500 outline-none text-white" placeholder="responder">
+                <label class="block text-gray-500 text-xs font-bold mb-1">SET CALLSIGN</label>
+                <input type="text" name="username" required autofocus class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 focus:border-blue-500 outline-none text-white" placeholder="e.g. Ranger-1">
             </div>
             <div>
-                <label class="block text-gray-500 text-xs font-bold mb-1">PASSCODE</label>
-                <input type="password" name="password" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 focus:border-blue-500 outline-none text-white" placeholder="••••">
+                <label class="block text-gray-500 text-xs font-bold mb-1">SET PASSWORD</label>
+                <input type="password" name="password" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 focus:border-blue-500 outline-none text-white" placeholder="(Optional)">
             </div>
             <button class="w-full bg-blue-600 hover:bg-blue-500 font-bold py-4 rounded-xl transition-all mt-4">
-                INITIATE SESSION
+                START SESSION
             </button>
         </form>
     </div>
