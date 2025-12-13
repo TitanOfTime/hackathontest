@@ -273,21 +273,19 @@ if (!isset($_SESSION['admin_auth'])):
                         marker.addTo(markers);
 
                         // --- FILTER LOGIC FOR SIDEBAR (UPDATED) ---
-                        // Rule 1: Severity > 3 (4 or 5)
+                        // Rule 1: Severity > 3 (4 or 5) OR
                         // Rule 2: Assistance in [Medical, Rescue, Trapped (SOS)]
-                        // Rule 3: Supplies allowed if >= 4 (Combined with Rule 1)
                         const sev = parseInt(inc.severity);
-                        const type = info.type; 
+                        const fullType = inc.incident_type; // Check FULL string (including tags)
                         
-                        const isUrgentType = type.includes('Medical') || type.includes('Rescue') || type.includes('Trapped');
-                        const isSupplies = type.includes('Supplies');
+                        const isUrgentType = fullType.includes('Medical') || fullType.includes('Rescue') || fullType.includes('Trapped');
+                        const isSupplies = fullType.includes('Supplies');
                         
                         let showInSidebar = false;
 
-                        if (sev >= 4) {
-                             if (isUrgentType || isSupplies) {
-                                 showInSidebar = true;
-                             }
+                        // Show if High Severity OR Urgent Needs (regardless of severity)
+                        if (sev >= 4 || isUrgentType) {
+                            showInSidebar = true;
                         }
                         
                         // --- NEW: TEXT SEARCH FILTER ---
