@@ -207,6 +207,8 @@ if (!isset($_SESSION['admin_auth'])):
                 let critical = 0, activeCount = 0, sidebarCount = 0, feedHTML = '', historyHTML = '';
 
                 data.forEach((inc) => {
+                    const localTime = formatTime(inc.reported_at);
+                    
                     // PARSE DATA
                     const info = parseIncidentData(inc.incident_type);
                     
