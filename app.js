@@ -166,6 +166,41 @@ function updateSafetyCard() {
     }
 }
 
+// --- SMS FALLBACK ---
+window.sendSMS = function () {
+    // 1. Gather Data
+    const type = document.getElementById('type-select').value;
+    const severity = document.getElementById('severity').value;
+    const details = document.getElementById('details').value;
+    const lat = document.getElementById('lat').value;
+    const lng = document.getElementById('lng').value;
+    const badge = localStorage.getItem('aegis_user') || "Unknown";
+
+    // 2. Construct Message
+    let msg = `SOS REPORT\nID: ${badge}\nType: ${type}`;
+
+    if (activeHelp.length > 0) msg += `\nNeed: ${activeHelp.join(', ')}`;
+    msg += `\nSev: ${severity}`;
+    if (details) msg += `\nNote: ${details}`;
+
+    // location
+    if (lat != 0 && lng != 0) {
+        msg += `\nLoc: ${lat},${lng}`;
+        msg += `\nMaps: http://maps.google.com/?q=${lat},${lng}`;
+    } else {
+        msg += `\nLoc: No GPS Signal`;
+    }
+
+    // 3. Open SMS App (Universal Link)
+    // Replace 119 or local urgency number
+    const phone = "119";
+
+    // Detect iOS vs Android for separator
+    const separator = navigator.userAgent.match(/iPhone|iPad|iPod/i) ? '&' : '?';
+
+    window.location.href = `sms:${phone}${separator}body=${encodeURIComponent(msg)}`;
+};
+
 window.clearImage = function () {
     document.getElementById('cameraInput').value = "";
     document.getElementById('preview-area').classList.add('hidden');

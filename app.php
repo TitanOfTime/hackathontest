@@ -183,6 +183,10 @@
                     <i class="fa-solid fa-paper-plane"></i> SUBMIT REPORT
                 </button>
 
+                <button type="button" onclick="sendSMS()" class="w-full bg-slate-800 hover:bg-slate-700 py-3 rounded-xl font-bold text-sm text-slate-400 shadow-lg flex items-center justify-center gap-2 transition-transform transform active:scale-95 border border-slate-700">
+                    <i class="fa-solid fa-comment-sms"></i> NO INTERNET? SEND VIA SMS
+                </button>
+
             </form>
 
             <div class="text-center pb-8 opacity-60">
