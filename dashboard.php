@@ -114,7 +114,7 @@ if (!isset($_SESSION['admin_auth'])):
         
         <div class="glass-panel rounded-2xl overflow-hidden flex flex-col shrink pointer-events-auto max-h-[40vh]">
             <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-white">
-                <h3 class="font-bold text-gray-800">Recent Reports</h3>
+                <h3 class="font-bold text-gray-800">Priority Incidents</h3>
                 <span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase">Live Feed</span>
             </div>
             <div id="feed-list" class="overflow-y-auto p-2 space-y-2 no-scrollbar bg-gray-50/50">
@@ -248,7 +248,30 @@ if (!isset($_SESSION['admin_auth'])):
                         `);
                         markers.addLayer(marker);
 
-                        if (activeCount <= 20) {
+                        // --- FILTER LOGIC FOR SIDEBAR ---
+                        // Rule 1: Severity > 3 (4 or 5)
+                        // Rule 2: Assistance in [Medical, Rescue, Trapped (SOS)]
+                        // Rule 3: Supplies ONLY if Severity == 5
+                        const sev = parseInt(inc.severity);
+                        const type = info.type; // "Medical Assistance", "Rescue", etc.
+                        
+                        // Check strict types (partial match safe? User gave specific strings)
+                        // "Medical", "Rescue", "Trapped (SOS)"
+                        // Let's do partial includes checking to be safe with "Medical Assistance" vs "Medical"
+                        const isUrgentType = type.includes('Medical') || type.includes('Rescue') || type.includes('Trapped');
+                        const isSupplies = type.includes('Supplies');
+                        
+                        let showInSidebar = false;
+
+                        if (sev >= 4) {
+                             if (isUrgentType) {
+                                 showInSidebar = true;
+                             } else if (isSupplies && sev === 5) {
+                                 showInSidebar = true;
+                             }
+                        }
+
+                        if (showInSidebar) {
                             feedHTML += `
                                 <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="map.flyTo([${inc.latitude}, ${inc.longitude}], 15)">
                                     <div class="flex justify-between items-start">
@@ -266,7 +289,7 @@ if (!isset($_SESSION['admin_auth'])):
                 });
                 
                 map.addLayer(markers);
-                document.getElementById('feed-list').innerHTML = feedHTML || '<div class="p-4 text-center text-gray-400 text-sm">No active incidents</div>';
+                document.getElementById('feed-list').innerHTML = feedHTML || '<div class="p-4 text-center text-gray-400 text-sm">No priority incidents</div>';
                 document.getElementById('history-list').innerHTML = historyHTML || '<div class="p-4 text-center text-gray-400 text-sm">No mission history yet</div>';
                 document.getElementById('total-count').innerText = activeCount;
                 document.getElementById('crit-count').innerText = critical;
