@@ -193,42 +193,53 @@
             });
         }
 
-        // 4. Assistance Button Logic (Visual Only)
-        let activeHelp = [];
+        // 4. Assistance Button Logic (FIXED)
+        let activeHelp = []; // This stores your ["Medical", "Trapped", etc.]
+        
         function toggleHelp(btn, type) {
+            // Check if already selected
             if(activeHelp.includes(type)) {
+                // Remove it
                 activeHelp = activeHelp.filter(i => i !== type);
+                
+                // Update UI (Inactive Look)
                 btn.classList.remove('active', 'bg-blue-600', 'border-blue-500');
                 btn.classList.add('bg-slate-800', 'border-slate-600');
             } else {
+                // Add it
                 activeHelp.push(type);
+                
+                // Update UI (Active Look)
                 btn.classList.remove('bg-slate-800', 'border-slate-600');
                 btn.classList.add('active', 'bg-blue-600', 'border-blue-500');
             }
+            console.log("Current Selection:", activeHelp); // Debugging
         }
 
-        // 5. Data Packer (Intercepts Submit)
-        // This combines the extra fields into the single 'type' field
+        // 5. Data Packer (FIXED)
         document.getElementById('incident-form').addEventListener('submit', (e) => {
-            // Don't prevent default here, let app.js handle it.
-            // But Update the hidden 'type' input FIRST.
-            
+            // 1. Get Base Values
             const baseType = document.getElementById('type-select').value;
             const count = document.getElementById('headcount').value;
             
+            // 2. Start building the string
             let finalType = baseType;
             
-            // Append Help Needs
+            // 3. Append Help Needs (The crucial part)
             if(activeHelp.length > 0) {
-                finalType += " [" + activeHelp.join(", ") + "]";
+                // Joins with comma: " [Medical, Rescue, Supplies]"
+                finalType += " [" + activeHelp.join(", ") + "]"; 
             }
             
-            // Append Headcount
+            // 4. Append Headcount
             if(count && count > 0) {
                 finalType += " (" + count + " Pax)";
             }
             
+            // 5. Update the HIDDEN input that actually gets sent
             document.getElementById('type').value = finalType;
+            
+            console.log("Sending Type:", finalType); // Debugging: Check console to see what sends
         });
 
         // 6. Image Clear

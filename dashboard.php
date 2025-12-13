@@ -143,6 +143,7 @@ if (!isset($_SESSION['admin_auth'])):
         let firstLoad = true;
         function formatTime(isoString) { if (!isoString) return 'Unknown'; const date = new Date(isoString); return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
 
+        // --- ACTION: RESOLVE ---
         async function resolveIncident(id) {
             if(!confirm('Mark resolved?')) return;
             try {
@@ -150,6 +151,16 @@ if (!isset($_SESSION['admin_auth'])):
                 const data = await res.json();
                 if(data.status === 'success') updateDashboard();
             } catch(e) {}
+        }
+
+        // --- NEW ACTION: DELETE ---
+        async function deleteIncident(id) {
+            if(!confirm('⚠️ PERMANENTLY DELETE this record? This cannot be undone.')) return;
+            try {
+                const res = await fetch('delete_incident.php', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id: id}) });
+                const data = await res.json();
+                if(data.status === 'success') updateDashboard();
+            } catch(e) { console.error(e); }
         }
 
         // --- THE UNPACKER LOGIC ---
@@ -195,8 +206,24 @@ if (!isset($_SESSION['admin_auth'])):
                     if(info.count) badgesHtml += `<span class="bg-gray-800 text-white px-1 rounded text-[10px] font-bold border border-gray-600 mr-1"><i class="fa-solid fa-user"></i> ${info.count}</span>`;
 
                     if (inc.status === 'resolved') {
-                        historyHTML += `<div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm opacity-75"><div class="flex justify-between items-start mb-2"><span class="font-bold text-gray-700 line-through text-sm">${info.type}</span><span class="bg-gray-200 text-gray-600 text-[10px] font-bold px-2 py-1 rounded uppercase">Resolved</span></div><p class="text-xs text-gray-400">Time: ${localTime}</p></div>`;
+                        // --- HISTORY ITEM WITH DELETE BUTTON ---
+                        historyHTML += `
+                            <div class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm opacity-75 group hover:opacity-100 transition-all">
+                                <div class="flex justify-between items-start mb-1">
+                                    <span class="font-bold text-gray-700 line-through text-xs">${info.type}</span>
+                                    <div class="flex gap-1">
+                                        <span class="bg-gray-200 text-gray-600 text-[10px] font-bold px-2 py-1 rounded uppercase">Done</span>
+                                        <button onclick="deleteIncident(${inc.id})" class="bg-red-100 hover:bg-red-500 text-red-500 hover:text-white rounded px-2 py-0.5 transition-colors" title="Delete Permanently">
+                                            <i class="fa-solid fa-trash text-[10px]"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="mb-1">${badgesHtml}</div>
+                                <p class="text-[10px] text-gray-400">Time: ${localTime}</p>
+                            </div>
+                        `;
                     } else {
+                        // --- ACTIVE ITEM ---
                         activeCount++;
                         if(inc.severity >= 4) critical++;
                         let iconToUse = (inc.severity >= 4) ? redIcon : blueIcon;
