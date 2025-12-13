@@ -245,6 +245,7 @@
         function clearImage() {
             document.getElementById('cameraInput').value = "";
             document.getElementById('preview-area').classList.add('hidden');
+            document.getElementById('camera-trigger').classList.remove('hidden');
         }
 
         // Init
