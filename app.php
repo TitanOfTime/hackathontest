@@ -78,6 +78,16 @@
                             <i class="fa-solid fa-chevron-down"></i>
                         </div>
                     </div>
+                    <!-- Dynamic Safety Card -->
+                    <div id="safety-alert" class="hidden animate-fade-in mt-2">
+                        <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex gap-3 text-red-100">
+                            <div class="pt-1"><i class="fa-solid fa-triangle-exclamation text-red-500"></i></div>
+                            <div class="text-sm">
+                                <p class="font-bold text-red-400 mb-1" id="safety-title">Safety Warning</p>
+                                <p id="safety-msg" class="opacity-90 leading-relaxed"></p>
+                            </div>
+                        </div>
+                    </div>
                     <input type="hidden" id="type" value="Landslide"> 
                 </div>
 
@@ -107,22 +117,22 @@
                     <label class="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3 block">Assistance Needed</label>
                     
                     <div class="grid grid-cols-2 gap-3 mb-4">
-                        <button type="button" class="help-btn p-3 rounded-xl bg-slate-800 border border-slate-600 flex flex-col items-center gap-2 transition-all hover:bg-slate-700" onclick="toggleHelp(this, 'Medical')">
+                        <button type="button" class="help-btn p-3 rounded-xl bg-slate-800 border border-slate-600 flex flex-col items-center gap-2 transition-all hover:bg-slate-700 active:scale-95 active:bg-slate-600" onclick="toggleHelp(this, 'Medical')">
                             <i class="fa-solid fa-truck-medical text-xl text-red-400"></i>
                             <span class="text-xs font-bold text-slate-300">Medical</span>
                         </button>
                         
-                        <button type="button" class="help-btn p-3 rounded-xl bg-slate-800 border border-slate-600 flex flex-col items-center gap-2 transition-all hover:bg-slate-700" onclick="toggleHelp(this, 'Trapped')">
+                        <button type="button" class="help-btn p-3 rounded-xl bg-slate-800 border border-slate-600 flex flex-col items-center gap-2 transition-all hover:bg-slate-700 active:scale-95 active:bg-slate-600" onclick="toggleHelp(this, 'Trapped')">
                             <i class="fa-solid fa-life-ring text-xl text-pink-500"></i>
                             <span class="text-xs font-bold text-slate-300">Trapped (SOS)</span>
                         </button>
                         
-                        <button type="button" class="help-btn p-3 rounded-xl bg-slate-800 border border-slate-600 flex flex-col items-center gap-2 transition-all hover:bg-slate-700" onclick="toggleHelp(this, 'Rescue')">
+                        <button type="button" class="help-btn p-3 rounded-xl bg-slate-800 border border-slate-600 flex flex-col items-center gap-2 transition-all hover:bg-slate-700 active:scale-95 active:bg-slate-600" onclick="toggleHelp(this, 'Rescue')">
                             <i class="fa-solid fa-helicopter text-xl text-blue-400"></i>
                             <span class="text-xs font-bold text-slate-300">Rescue</span>
                         </button>
                         
-                        <button type="button" class="help-btn p-3 rounded-xl bg-slate-800 border border-slate-600 flex flex-col items-center gap-2 transition-all hover:bg-slate-700" onclick="toggleHelp(this, 'Supplies')">
+                        <button type="button" class="help-btn p-3 rounded-xl bg-slate-800 border border-slate-600 flex flex-col items-center gap-2 transition-all hover:bg-slate-700 active:scale-95 active:bg-slate-600" onclick="toggleHelp(this, 'Supplies')">
                             <i class="fa-solid fa-box-open text-xl text-amber-200"></i>
                             <span class="text-xs font-bold text-slate-300">Supplies</span>
                         </button>
@@ -137,6 +147,11 @@
 
                 <input type="hidden" id="lat" value="0">
                 <input type="hidden" id="lng" value="0">
+
+                <div class="space-y-2">
+                    <label class="text-sm font-semibold text-slate-400 uppercase tracking-wide">Additional Details</label>
+                    <textarea id="details" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white focus:border-blue-500 outline-none resize-none placeholder-slate-600" placeholder="Describe the situation, blocked paths, or specific injuries..."></textarea>
+                </div>
 
                 <div class="space-y-2">
                     <label class="text-sm font-semibold text-slate-400 uppercase tracking-wide">Photo Evidence</label>

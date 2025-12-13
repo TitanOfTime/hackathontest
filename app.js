@@ -4,6 +4,18 @@
 let compressedImageString = ""; // Stores base64 image
 let activeHelp = []; // Stores assistance tags (e.g. ['Medical', 'Trapped'])
 
+// --- SAFETY & FIRST AID DATA ---
+const safetyContent = {
+    "Landslide": { title: "Landslide Risk", msg: "Move to high ground immediately. Do not stay near the slide area to take photos. Listen for rumbling sounds." },
+    "Flood": { title: "Flash Flood Warning", msg: "Climb to high ground. Do not walk, swim, or drive through flood waters. Turn around, don't drown." },
+    "Road Blocked": { title: "Road obstruction", msg: "Do not attempt to clear heavy debris yourself. Warn approaching traffic if safe to do so." },
+    "Power Down": { title: "Electrical Hazard", msg: "Stay at least 10 meters away. Do not touch anything touching the wire. Assume it is live." },
+    "Fire": { title: "Fire Danger", msg: "Evacuate immediately. Stay low if there is smoke. Do not return for belongings." },
+    "Medical": { title: "Medical Emergency", msg: "Keep the patient still and warm. Do not give food or water if surgery might be needed. Apply pressure to bleeding." },
+    "Trapped": { title: "SOS Guidance", msg: "Conserve energy. Bang on pipes or walls rather than shouting to avoid inhaling dust. Cover your nose/mouth." },
+    "Rescue": { title: "Rescue Team", msg: "Stay visible if possible. Use colorful cloth or light to signal. Stay clear of helicopter landing zones" }
+};
+
 // --- 1. AUTH LOGIC ---
 const loginView = document.getElementById('login-view');
 const appView = document.getElementById('app-view');
@@ -67,6 +79,12 @@ function updateHiddenData() {
         finalType += " [" + activeHelp.join(", ") + "]";
     }
 
+    // Append Details from Textarea if present
+    const detailsInput = document.getElementById('details');
+    if (detailsInput && detailsInput.value.trim() !== "") {
+        finalType += " | Note: " + detailsInput.value.trim();
+    }
+
     // Append Headcount (e.g. " (5 Pax)")
     if (count) {
         // Validation: Force Integer & Range 1-500
@@ -118,7 +136,35 @@ window.toggleHelp = function (btn, type) {
         btn.classList.add('active', 'bg-blue-600', 'border-blue-500');
     }
     updateHiddenData(); // Update hidden input immediately
+    updateSafetyCard(); // Update Safety Card based on active tags
 };
+
+// Update Safety Card Logic
+function updateSafetyCard() {
+    const typeSelect = document.getElementById('type-select');
+    const safetyAlert = document.getElementById('safety-alert');
+    if (!typeSelect || !safetyAlert) return;
+
+    const currentType = typeSelect.value;
+
+    // Determine which message to show
+    // Priority: Medical/Trapped (Life Safety) -> Incident Type Default
+    let content = null;
+
+    if (activeHelp.includes('Medical')) content = safetyContent['Medical'];
+    else if (activeHelp.includes('Trapped')) content = safetyContent['Trapped'];
+    else if (activeHelp.includes('Rescue')) content = safetyContent['Rescue'];
+    else if (safetyContent[currentType]) content = safetyContent[currentType];
+
+    // Update UI
+    if (content) {
+        document.getElementById('safety-title').innerText = content.title;
+        document.getElementById('safety-msg').innerText = content.msg;
+        safetyAlert.classList.remove('hidden');
+    } else {
+        safetyAlert.classList.add('hidden');
+    }
+}
 
 window.clearImage = function () {
     document.getElementById('cameraInput').value = "";
@@ -132,8 +178,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const typeSelect = document.getElementById('type-select');
     const headcountInput = document.getElementById('headcount');
 
-    if (typeSelect) typeSelect.addEventListener('change', updateHiddenData);
+    if (typeSelect) {
+        typeSelect.addEventListener('change', () => {
+            updateHiddenData();
+            updateSafetyCard();
+        });
+    }
     if (headcountInput) headcountInput.addEventListener('input', updateHiddenData);
+
+    // Details Listener
+    const detailsInput = document.getElementById('details');
+    if (detailsInput) detailsInput.addEventListener('input', updateHiddenData);
+
+    // Initial Safety Card Load
+    updateSafetyCard();
 });
 
 // --- 3. CAMERA & COMPRESSION ---
