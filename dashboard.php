@@ -150,6 +150,13 @@ if (!isset($_SESSION['admin_auth'])):
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap', maxZoom: 20 }).addTo(map);
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
+        let isPaused = false;
+        map.on('popupopen', () => isPaused = true);
+        map.on('popupclose', () => { 
+            isPaused = false; 
+            updateDashboard(); // Immediately update when closed to catch up
+        });
+
         // 2. Icons
         const redIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
         const blueIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
@@ -201,6 +208,7 @@ if (!isset($_SESSION['admin_auth'])):
         }
 
         async function updateDashboard() {
+            if (isPaused) return;
             try {
                 const res = await fetch('fetch.php');
                 const data = await res.json();
