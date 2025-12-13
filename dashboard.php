@@ -248,7 +248,11 @@ if (!isset($_SESSION['admin_auth'])):
         function highlightIncident(id) {
             const marker = markers[id];
             if (marker) {
+                // LOCK UPDATES immediately to prevent dashboard refresh ensuring marker isn't removed during zoom
+                isPaused = true;
+                
                 if (window.popupTimer) clearTimeout(window.popupTimer);
+                
                 clusterGroup.zoomToShowLayer(marker, function() {
                     marker.openPopup();
                     // Auto-close after 10 seconds
