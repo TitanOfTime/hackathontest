@@ -16,12 +16,34 @@
     <div class="flex-1 relative z-0" id="map"></div>
 
     <script>
-        // Init Map
-        const map = L.map('map').setView([6.6828, 80.3992], 12);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        // 1. Init Map (Start Zoomed Out)
+        const map = L.map('map').setView([20, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
 
-        // Polling Loop
-        // 3. Polling Loop (UPDATED FOR IMAGES)
+        // 2. Define Custom Icons (CRITICAL FIX)
+        const redIcon = new L.Icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        const blueIcon = new L.Icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        // 3. Auto-Zoom Logic
+        let firstLoad = true;
+
         async function updateMap() {
             try {
                 const res = await fetch('fetch.php');
@@ -34,7 +56,8 @@
                     }
                 });
 
-                // Update Counts
+                // Create a group to hold all markers
+                const markers = L.featureGroup();
                 let critical = 0;
                 
                 data.forEach(inc => {
@@ -43,9 +66,8 @@
                     // Choose Icon
                     let iconToUse = (inc.severity >= 4) ? redIcon : blueIcon;
                     
-                    // --- NEW IMAGE LOGIC STARTS HERE ---
+                    // Image Logic
                     let imageHtml = '';
-                    // Check if image data exists and is long enough to be a real image
                     if (inc.image_data && inc.image_data.length > 100) {
                         imageHtml = `
                             <div class="mt-2">
@@ -53,23 +75,36 @@
                             </div>
                         `;
                     }
-                    // --- NEW IMAGE LOGIC ENDS HERE ---
 
                     // Create Marker with Popup
-                    L.marker([inc.latitude, inc.longitude], {icon: iconToUse})
-                     .addTo(map)
-                     .bindPopup(`
+                    const marker = L.marker([inc.latitude, inc.longitude], {icon: iconToUse});
+                    
+                    marker.bindPopup(`
                         <div class="text-center" style="min-width: 200px">
                             <strong class="text-lg uppercase tracking-wide">${inc.incident_type}</strong><br>
                             <span class="${inc.severity >= 4 ? 'text-red-600 font-bold' : 'text-blue-600'}">
                                 Severity Level: ${inc.severity}
                             </span><br>
                             <span class="text-gray-500 text-xs">${inc.reported_at}</span>
-                            ${imageHtml} </div>
+                            ${imageHtml} 
+                        </div>
                      `);
+
+                    // Add to group (Essential for Auto-Zoom)
+                    marker.addTo(markers);
                 });
 
-                // Update Header Stats (if elements exist)
+                // Add all markers to map
+                markers.addTo(map);
+
+                // 4. Trigger Auto-Zoom (Only once)
+                if (firstLoad && data.length > 0) {
+                    map.fitBounds(markers.getBounds(), { padding: [50, 50] });
+                    firstLoad = false;
+                    console.log("Auto-zoomed to " + data.length + " incidents.");
+                }
+
+                // Update Stats
                 if(document.getElementById('crit-count')) {
                     document.getElementById('crit-count').innerText = critical;
                     document.getElementById('total-count').innerText = data.length;
@@ -77,6 +112,7 @@
 
             } catch(e) { console.log("Map poll error", e); }
         }
+
         setInterval(updateMap, 3000);
         updateMap();
     </script>
