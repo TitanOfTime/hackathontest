@@ -118,7 +118,7 @@
                     </div>
 
                     <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">Headcount (Approx)</label>
-                    <input type="number" id="headcount" value="1" min="1" max="500" step="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" oninput="if(this.value > 500) this.value = 500; if(this.value < 1) this.value = 1;" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none" placeholder="1-500">
+                    <input type="number" id="headcount" value="1" min="1" max="500" step="1" inputmode="numeric" pattern="[0-9]*" oninput="if(this.value > 500) this.value = 500; if(this.value && this.value < 1) this.value = 1;" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none" placeholder="1-500">
                 </div>
 
                 <input type="hidden" id="lat" value="0">

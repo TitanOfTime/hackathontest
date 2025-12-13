@@ -62,13 +62,19 @@ function updateHiddenData() {
     }
 
     // Append Headcount (e.g. " (5 Pax)")
-    if (count && count > 0) {
-        // Validation: Force Integer
-        const intCount = Math.floor(count);
-        if (intCount !== Number(count)) {
-            // If they managed to type a decimal, fix it visibly
+    if (count) {
+        // Validation: Force Integer & Range 1-500
+        let intCount = Math.floor(Number(count));
+
+        // Strict Clamping
+        if (intCount < 1) intCount = 1;
+        if (intCount > 500) intCount = 500;
+
+        // Visual Update if changed
+        if (headcountInput.value != intCount) {
             headcountInput.value = intCount;
         }
+
         finalType += " (" + intCount + " Pax)";
     }
 
