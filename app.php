@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Aegis Responder</title>
     <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -17,12 +19,17 @@
         // SECURITY CHECK: Redirect to login if no auth token found
         if (!localStorage.getItem('aegis_auth')) {
             window.location.href = 'index.php';
+        } else {
+            // Reveal App only if authorized
+            document.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('app-view').classList.remove('hidden');
+            });
         }
     </script>
 </head>
 <body class="bg-[#0f172a] text-slate-200 min-h-screen pb-20">
 
-    <div id="app-view" class="max-w-lg mx-auto min-h-screen flex flex-col relative">
+    <div id="app-view" class="hidden max-w-lg mx-auto min-h-screen flex flex-col relative">
         
         <div class="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8 pb-10 rounded-b-[3rem] shadow-2xl z-10 relative overflow-hidden border-b border-white/10">
             <!-- decorative bg -->
