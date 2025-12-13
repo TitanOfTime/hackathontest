@@ -44,8 +44,8 @@ if (document.getElementById('login-form')) {
 }
 
 function showApp(badge) {
-    if(loginView) loginView.classList.add('hidden');
-    if(appView) appView.classList.remove('hidden');
+    if (loginView) loginView.classList.add('hidden');
+    if (appView) appView.classList.remove('hidden');
     if (document.getElementById('display-badge')) document.getElementById('display-badge').innerText = badge;
     // Trigger initial data pack
     updateHiddenData();
@@ -336,13 +336,20 @@ async function trySync() {
             body: JSON.stringify(queue)
         });
 
-        if (res.ok) {
+        // PARSE THE JSON
+        const data = await res.json();
+
+        if (data.status === 'success') {
             localStorage.setItem('aegis_queue', "[]");
             updateQueueUI();
             updateStatus();
+        } else {
+            console.error("Server Error:", data);
+            alert("⚠️ Upload Failed: " + (data.message || "Unknown Server Error"));
         }
+
     } catch (e) {
-        console.log("Sync failed.");
+        console.log("Sync failed.", e);
         updateStatus();
     }
 }
