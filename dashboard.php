@@ -73,6 +73,42 @@ if (!isset($_SESSION['admin_auth'])):
             border: 1px solid rgba(229, 231, 235, 0.5);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
+        
+        /* --- CUSTOM CLUSTER STYLES --- */
+        @keyframes blink-cluster {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.85; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+            background-color: transparent !important; /* Remove default light outer ring */
+        }
+
+        .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
+            width: 36px !important;
+            height: 36px !important;
+            margin-left: 2px !important;
+            margin-top: 2px !important;
+            
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            
+            border-radius: 50%;
+            border: 2px solid white;
+            color: white !important;
+            font-weight: 900 !important;
+            font-family: 'Inter', sans-serif;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            
+            animation: blink-cluster 2s infinite ease-in-out;
+        }
+
+        /* Dark Colours */
+        .marker-cluster-small div { background-color: #0f172a !important; } /* Dark Slate */
+        .marker-cluster-medium div { background-color: #7c2d12 !important; } /* Dark Orange */
+        .marker-cluster-large div { background-color: #7f1d1d !important; } /* Dark Red */
     </style>
 </head>
 <body class="h-screen w-full overflow-hidden bg-gray-100 relative">
