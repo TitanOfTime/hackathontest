@@ -1,49 +1,72 @@
-// sw.js
-const CACHE_NAME = "aegis-v2"; // Changed version to force update
+// sw.js - BULLETPROOF VERSION
+const CACHE_NAME = "aegis-v3"; // Version bump to force update
+
+// EXACT paths are critical. 
+// If your file is named "App.php" (capital A), this will fail.
 const ASSETS = [
     "/",
     "/app.php",
     "/app.js",
+    "/manifest.json",
     "https://cdn.tailwindcss.com"
 ];
 
-// 1. Install: Cache files
-self.addEventListener("install", e => {
-    console.log("[SW] Installing...");
-    e.waitUntil(
-        caches.open(CACHE_NAME).then(cache => {
-            console.log("[SW] Caching files");
-            return cache.addAll(ASSETS);
+// 1. Install Phase (The Critical Part)
+self.addEventListener("install", (event) => {
+    console.log("[SW] Installing... Starting Cache.");
+    
+    event.waitUntil(
+        caches.open(CACHE_NAME).then((cache) => {
+            // We use 'return' to make sure the promise completes
+            return cache.addAll(ASSETS).then(() => {
+                console.log("[SW] All files cached successfully!");
+                self.skipWaiting(); // Force activation
+            }).catch((err) => {
+                console.error("[SW] Cache Failed!", err);
+            });
         })
     );
-    self.skipWaiting(); // Force activation immediately
 });
 
-// 2. Activate: Clean old caches
-self.addEventListener("activate", e => {
-    console.log("[SW] Activated");
-    e.waitUntil(
-        caches.keys().then(keys => {
-            return Promise.all(keys.map(key => {
-                if(key !== CACHE_NAME) return caches.delete(key);
-            }));
+// 2. Activate Phase (Clean up old versions)
+self.addEventListener("activate", (event) => {
+    console.log("[SW] Activated. Cleaning old caches.");
+    event.waitUntil(
+        caches.keys().then((keys) => {
+            return Promise.all(
+                keys.map((key) => {
+                    if (key !== CACHE_NAME) return caches.delete(key);
+                })
+            );
         })
     );
-    return self.clients.claim();
+    self.clients.claim();
 });
 
-// 3. Fetch: Network First, then Cache (Better for dev)
-self.addEventListener("fetch", e => {
-    e.respondWith(
-        fetch(e.request)
-            .then(res => {
-                // If online, clone response to cache and return
-                const resClone = res.clone();
-                caches.open(CACHE_NAME).then(cache => {
-                    cache.put(e.request, resClone);
+// 3. Fetch Phase (Serve from Cache if offline)
+self.addEventListener("fetch", (event) => {
+    // Only intercept GET requests
+    if (event.request.method !== 'GET') return;
+
+    event.respondWith(
+        fetch(event.request)
+            .then((response) => {
+                // If network works, return response AND update cache
+                const resClone = response.clone();
+                caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(event.request, resClone);
                 });
-                return res;
+                return response;
             })
-            .catch(() => caches.match(e.request)) // If offline, return cache
+            .catch(() => {
+                // If network fails, look in cache
+                return caches.match(event.request).then((response) => {
+                    if (response) return response;
+                    // Fallback for root URL to app.php
+                    if (event.request.mode === 'navigate') {
+                        return caches.match('/app.php');
+                    }
+                });
+            })
     );
 });
