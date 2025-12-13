@@ -50,9 +50,17 @@
     <script src="app.js"></script>
     <script>
         // Register PWA Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js');
-        }
+       
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('✅ Service Worker Registered. Scope:', reg.scope))
+                .catch(err => {
+                    console.log('❌ SW Registration Failed:', err);
+                    alert("OFFLINE MODE FAILED: " + err.message);
+                });
+        });
+    }
     </script>
 </body>
 </html>
