@@ -7,32 +7,23 @@
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>body { touch-action: manipulation; }</style>
+    <script>
+        // SECURITY CHECK: If no token, kick back to index.php
+        if (!localStorage.getItem('aegis_auth')) {
+            window.location.href = 'index.php';
+        }
+    </script>
 </head>
 <body class="bg-gray-900 text-white min-h-screen font-sans">
 
-    <div id="login-view" class="hidden flex flex-col items-center justify-center min-h-screen p-6">
-        <h1 class="text-4xl font-bold mb-2 text-blue-500">AEGIS</h1>
-        <p class="text-gray-400 mb-8">Responder Auth</p>
-        
-        <form id="login-form" class="w-full max-w-sm space-y-4">
-            <div>
-                <label class="block text-sm text-gray-400 mb-1">Badge ID</label>
-                <input type="text" id="badge-id" class="w-full p-4 rounded-xl bg-gray-800 border border-gray-700 focus:border-blue-500 outline-none text-white" placeholder="e.g. RES-01">
-            </div>
-            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-xl font-bold text-lg">
-                AUTHENTICATE
-            </button>
-        </form>
-    </div>
-
-    <div id="app-view" class="hidden">
+    <div id="app-view">
         
         <div id="status-bar" class="p-3 text-center font-bold text-sm bg-gray-600 text-gray-200 transition-colors duration-300">
             CHECKING CONNECTION...
         </div>
 
         <div class="flex justify-between items-center p-4 bg-gray-800">
-            <span class="font-bold text-gray-300">ID: <span id="display-badge">...</span></span>
+            <span class="font-bold text-gray-300">USER: <span id="display-badge">...</span></span>
             <button onclick="logout()" class="text-xs text-red-400 border border-red-900 px-2 py-1 rounded hover:bg-red-900">LOGOUT</button>
         </div>
 
@@ -90,15 +81,22 @@
 
     <script src="app.js"></script>
     <script>
+        // Init Display Name
+        document.getElementById('display-badge').innerText = localStorage.getItem('aegis_user') || 'Unknown';
+
+        // FORCE LOGOUT TO REDIRECT TO INDEX.PHP
+        function logout() {
+            if(confirm("End Session?")) {
+                localStorage.removeItem('aegis_auth');
+                localStorage.removeItem('aegis_user');
+                window.location.href = 'index.php'; // <--- The Fix
+            }
+        }
+
         // Register PWA Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('✅ Service Worker Registered. Scope:', reg.scope))
-                    .catch(err => {
-                        console.log('❌ SW Registration Failed:', err);
-                        // alert("OFFLINE MODE FAILED: " + err.message); // Only uncomment for debugging
-                    });
+                navigator.serviceWorker.register('/sw.js');
             });
         }
     </script>
