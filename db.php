@@ -1,7 +1,6 @@
 <?php
-// db.php
+// db.php - CLEAN VERSION
 header("Access-Control-Allow-Origin: *"); 
-mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 try {
     $conn = new PDO(
@@ -11,9 +10,13 @@ try {
         getenv('MYSQLUSER'), 
         getenv('MYSQLPASSWORD')
     );
+    
+    // Set Error Mode to Exception (This replaces the line that crashed)
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    
 } catch(PDOException $e) {
-    die("DB Connection Error. Check Railway Variables.");
+    // If this prints, your variables are wrong.
+    die("DB Connection Failed: " . $e->getMessage());
 }
 ?>
