@@ -118,7 +118,7 @@
                     </div>
 
                     <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">Headcount (Approx)</label>
-                    <input type="number" id="headcount" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none" placeholder="0">
+                    <input type="number" id="headcount" min="1" max="500" step="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" oninput="if(this.value > 500) this.value = 500;" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none" placeholder="1-500">
                 </div>
 
                 <input type="hidden" id="lat" value="0">
@@ -166,92 +166,7 @@
 
     <script src="app.js"></script>
     <script>
-        // --- INLINE UI LOGIC ---
-
-        // 1. FIX: Display ID on Load
-        (function() {
-            const user = localStorage.getItem('aegis_user');
-            const badge = document.getElementById('display-badge');
-            if(badge) {
-                badge.innerText = user || 'Unknown';
-            }
-        })();
-
-        // 2. FIX: Logout Redirect
-        function logout() {
-            if(confirm("End Session?")) {
-                localStorage.removeItem('aegis_auth');
-                localStorage.removeItem('aegis_user');
-                // Force Redirect to Index
-                window.location.href = 'index.php';
-            }
-        }
-        
-        // --- REAL-TIME DATA PACKER ---
-        let activeHelp = []; 
-
-        function updateHiddenData() {
-            const baseType = document.getElementById('type-select').value;
-            const count = document.getElementById('headcount').value;
-            
-            let finalType = baseType;
-            
-            // Append Tags
-            if(activeHelp.length > 0) {
-                finalType += " [" + activeHelp.join(", ") + "]";
-            }
-            
-            // Append Headcount
-            if(count && count > 0) {
-                finalType += " (" + count + " Pax)";
-            }
-            
-            // UPDATE HIDDEN INPUT
-            document.getElementById('type').value = finalType;
-        }
-
-        // --- EVENTS ---
-        document.getElementById('type-select').addEventListener('change', updateHiddenData);
-        document.getElementById('headcount').addEventListener('input', updateHiddenData);
-
-        // Severity
-        function setSeverity(val) {
-            document.getElementById('severity').value = val;
-            document.getElementById('sev-display').innerText = val;
-            
-            const btns = document.querySelectorAll('.severity-btn');
-            btns.forEach(btn => {
-                btn.className = "severity-btn w-10 h-10 rounded-full border border-slate-600 bg-slate-700 text-slate-300 font-bold transition-all flex items-center justify-center";
-                if(parseInt(btn.innerText) === val) {
-                    btn.className = "severity-btn w-10 h-10 rounded-full border-yellow-500/50 bg-yellow-500 text-black font-bold transition-all flex items-center justify-center active scale-110 shadow-[0_0_15px_rgba(234,179,8,0.3)]";
-                }
-            });
-        }
-
-        // Assistance
-        function toggleHelp(btn, type) {
-            if(activeHelp.includes(type)) {
-                activeHelp = activeHelp.filter(i => i !== type);
-                btn.classList.remove('active', 'bg-blue-600', 'border-blue-500');
-                btn.classList.add('bg-slate-800', 'border-slate-600');
-            } else {
-                activeHelp.push(type);
-                btn.classList.remove('bg-slate-800', 'border-slate-600');
-                btn.classList.add('active', 'bg-blue-600', 'border-blue-500');
-            }
-            updateHiddenData();
-        }
-
-        // Image
-        function clearImage() {
-            document.getElementById('cameraInput').value = "";
-            document.getElementById('preview-area').classList.add('hidden');
-            document.getElementById('camera-trigger').classList.remove('hidden');
-        }
-
-        // Init
-        updateHiddenData();
-        // Register SW
+        // Register Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
         }
