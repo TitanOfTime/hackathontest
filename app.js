@@ -43,7 +43,8 @@ function showApp(badge) {
 window.logout = function () {
     if (confirm("End session?")) {
         localStorage.removeItem('aegis_user');
-        location.reload();
+        localStorage.removeItem('aegis_auth');
+        window.location.href = 'index.php'; // Redirect to login
     }
 };
 
