@@ -1,4 +1,60 @@
-<?php require 'db.php'; ?>
+<?php 
+session_start();
+require 'db.php'; 
+
+// --- ADMIN LOGOUT ---
+if (isset($_GET['logout'])) {
+    session_destroy();
+    header("Location: dashboard.php");
+    exit;
+}
+
+// --- ADMIN LOGIN LOGIC ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'])) {
+    $u = $_POST['username'];
+    $p = $_POST['password'];
+
+    // DATABASE CHECK
+    $stmt = $conn->prepare("SELECT * FROM users WHERE username = ? AND role = 'admin'");
+    $stmt->execute([$u]);
+    $admin = $stmt->fetch();
+
+    if ($admin && password_verify($p, $admin['password'])) {
+        $_SESSION['admin_auth'] = true;
+        header("Location: dashboard.php");
+        exit;
+    } else {
+        $error = "Access Denied: Admin Level Only";
+    }
+}
+
+// IF NOT LOGGED IN -> SHOW LOGIN FORM
+if (!isset($_SESSION['admin_auth'])): 
+?>
+<!DOCTYPE html>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4 font-sans">
+    <div class="max-w-md w-full bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-2xl text-center">
+        <h1 class="text-3xl font-black mb-2">AEGIS HQ</h1>
+        <p class="text-gray-400 text-xs uppercase tracking-widest mb-6">Classified Access</p>
+        
+        <?php if(isset($error)) echo "<p class='text-red-400 mb-4 bg-red-900/20 p-2 rounded border border-red-500/50 text-sm'>$error</p>"; ?>
+        
+        <form method="POST" class="space-y-4">
+            <input type="text" name="username" class="w-full bg-gray-900 border border-gray-700 text-white p-4 rounded-xl text-center text-lg tracking-widest" placeholder="Username" autofocus>
+            <input type="password" name="password" class="w-full bg-gray-900 border border-gray-700 text-white p-4 rounded-xl text-center text-lg tracking-widest" placeholder="••••••••">
+            <button class="w-full bg-blue-600 hover:bg-blue-500 font-bold py-4 rounded-xl shadow-lg">UNLOCK SYSTEM</button>
+        </form>
+        
+        <a href="index.php" class="block mt-6 text-gray-500 text-xs hover:text-white transition-colors">← Switch to Responder Link</a>
+    </div>
+    <script src="https://cdn.tailwindcss.com"></script>
+</body>
+</html>
+<?php 
+exit; 
+endif; 
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -52,6 +108,10 @@
     </div>
 
     <div class="absolute top-6 right-6 z-10 flex flex-col gap-3 items-end">
+        <a href="?logout=true" class="bg-red-900/80 hover:bg-red-800 text-red-200 px-4 py-2 rounded-lg font-bold text-xs backdrop-blur border border-red-700/50 mb-2">
+            🔒 LOGOUT
+        </a>
+        
         <a href="app.php" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg flex items-center gap-2 transition-transform transform active:scale-95">
             <span class="text-xl">+</span> New Report
         </a>

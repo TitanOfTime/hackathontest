@@ -1,52 +1,63 @@
+<?php
+require 'db.php';
+session_start();
+
+$error = "";
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $u = $_POST['username'] ?? '';
+    $p = $_POST['password'] ?? '';
+
+    // DATABASE CHECK
+    $stmt = $conn->prepare("SELECT * FROM users WHERE username = ? AND role = 'responder'");
+    $stmt->execute([$u]);
+    $user = $stmt->fetch();
+
+    if ($user && password_verify($p, $user['password'])) {
+        // Login Success: Save Token to LocalStorage for Offline App
+        echo "<script>
+            localStorage.setItem('aegis_auth', 'true');
+            localStorage.setItem('aegis_user', '" . htmlspecialchars($u) . "');
+            window.location.href = 'app.php';
+        </script>";
+        exit;
+    } else {
+        $error = "Invalid Responder Credentials";
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Aegis - Live</title>
+    <title>Responder Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
-
-    <div class="text-center max-w-lg w-full">
-        <h1 class="text-5xl font-bold mb-2 tracking-tighter text-blue-500">AEGIS</h1>
-        <p class="text-gray-400 mb-12 uppercase tracking-widest text-sm">Disaster Response System</p>
-
-        <div class="mb-8">
-            <?php
-            require 'db.php';
-            if (isset($conn)) {
-                echo '<span class="bg-green-900 text-green-300 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide">● System Online</span>';
-            } else {
-                echo '<span class="bg-red-900 text-red-300 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide">● System Offline</span>';
-            }
-            ?>
-        </div>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-6">
+    <div class="max-w-sm w-full">
+        <h1 class="text-4xl font-bold mb-2 text-blue-500 text-center">AEGIS</h1>
+        <p class="text-gray-400 mb-8 text-center text-sm uppercase tracking-widest">Field Responder Access</p>
         
-        <div class="space-y-4">
-            <a href="app.php" class="block w-full bg-blue-600 hover:bg-blue-500 p-6 rounded-2xl transition-transform transform active:scale-95 shadow-lg border border-blue-500">
-                <div class="flex items-center justify-between">
-                    <div class="text-left">
-                        <h2 class="text-2xl font-bold">Field Responder App</h2>
-                        <p class="text-blue-200 text-sm">Mobile Data Collection</p>
-                    </div>
-                    <span class="text-4xl">📱</span>
-                </div>
-            </a>
-            
-            <a href="dashboard.php" class="block w-full bg-gray-800 hover:bg-gray-700 p-6 rounded-2xl transition-transform transform active:scale-95 shadow-lg border border-gray-700">
-                <div class="flex items-center justify-between">
-                    <div class="text-left">
-                        <h2 class="text-2xl font-bold">HQ Dashboard</h2>
-                        <p class="text-gray-400 text-sm">Live Command Map</p>
-                    </div>
-                    <span class="text-4xl">🗺️</span>
-                </div>
-            </a>
-        </div>
+        <?php if($error): ?>
+            <div class="bg-red-500/20 border border-red-500 text-red-200 p-3 rounded-lg mb-4 text-center text-sm">
+                <?php echo $error; ?>
+            </div>
+        <?php endif; ?>
 
-        <p class="mt-12 text-gray-600 text-xs">Aegis v1.0 // Hackathon Build</p>
+        <form method="POST" class="space-y-4">
+            <div>
+                <label class="block text-gray-500 text-xs font-bold mb-1">CALLSIGN</label>
+                <input type="text" name="username" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 focus:border-blue-500 outline-none text-white" placeholder="responder">
+            </div>
+            <div>
+                <label class="block text-gray-500 text-xs font-bold mb-1">PASSCODE</label>
+                <input type="password" name="password" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 focus:border-blue-500 outline-none text-white" placeholder="••••">
+            </div>
+            <button class="w-full bg-blue-600 hover:bg-blue-500 font-bold py-4 rounded-xl transition-all mt-4">
+                INITIATE SESSION
+            </button>
+        </form>
     </div>
-
 </body>
 </html>
