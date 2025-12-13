@@ -1,5 +1,5 @@
 // sw.js - BULLETPROOF VERSION
-const CACHE_NAME = "aegis-v3"; // Version bump to force update
+const CACHE_NAME = "aegis-v4"; // Version bump to force update
 
 // EXACT paths are critical. 
 // If your file is named "App.php" (capital A), this will fail.
@@ -7,8 +7,7 @@ const ASSETS = [
     "/",
     "/app.php",
     "/app.js",
-    "/manifest.json",
-    "https://cdn.tailwindcss.com"
+    "/manifest.json"
 ];
 
 // 1. Install Phase (The Critical Part)
