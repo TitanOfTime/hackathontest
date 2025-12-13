@@ -1,30 +1,83 @@
 <?php
-// sync.php
+// sync.php - DIAGNOSTIC VERSION
 header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *'); // Allow from any domain (fixes some Railway issues)
+header('Access-Control-Allow-Methods: POST');
+header('Access-Control-Allow-Headers: Content-Type');
+
+// 1. Load Database
+if (!file_exists('db.php')) {
+    http_response_code(500);
+    echo json_encode(["status" => "error", "message" => "db.php file not found"]);
+    exit;
+}
 require 'db.php';
 
-$json = file_get_contents('php://input');
-$data = json_decode($json, true);
+// 2. Error Handling (Prevent HTML Errors messing up JSON)
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
 
-if (!$data) { echo json_encode(["status" => "empty"]); exit; }
+try {
+    // 3. Get Data
+    $json = file_get_contents('php://input');
+    $data = json_decode($json, true);
 
-// FIXED: Added 'username' to the INSERT statement
-$stmt = $conn->prepare("INSERT IGNORE INTO incidents (username, client_uuid, incident_type, severity, latitude, longitude, reported_at, image_data, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')");
+    if (!$data) {
+        echo json_encode(["status" => "error", "message" => "No JSON data received"]);
+        exit;
+    }
 
-$count = 0;
-foreach ($data as $row) {
-    $stmt->execute([
-        $row['username'] ?? 'Unknown', // <--- SAVES THE USERNAME
-        $row['uuid'], 
-        $row['type'], 
-        $row['severity'], 
-        $row['lat'], 
-        $row['lng'], 
-        $row['timestamp'],
-        $row['image'] ?? null
+    // 4. THE INSERT COMMAND
+    // We map your Javascript variable names (left) to Database Column names (right)
+    // Javascript: uuid, username, type, severity, lat, lng, timestamp, image
+    // Database:   client_uuid, username, incident_type, severity, latitude, longitude, reported_at, image_data, status
+    
+    $sql = "INSERT INTO incidents (
+                client_uuid, 
+                username, 
+                incident_type, 
+                severity, 
+                latitude, 
+                longitude, 
+                reported_at, 
+                image_data, 
+                status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')";
+
+    $stmt = $conn->prepare($sql);
+    $savedCount = 0;
+
+    foreach ($data as $row) {
+        // Fallbacks for missing data
+        $uuid = $row['uuid'] ?? uniqid();
+        $user = $row['username'] ?? 'Unknown';
+        $type = $row['type'] ?? 'General';
+        $sev  = $row['severity'] ?? 3;
+        $lat  = $row['lat'] ?? 0.0;
+        $lng  = $row['lng'] ?? 0.0;
+        $time = $row['timestamp'] ?? date('Y-m-d H:i:s');
+        $img  = $row['image'] ?? null;
+
+        $stmt->execute([$uuid, $user, $type, $sev, $lat, $lng, $time, $img]);
+        if ($stmt->rowCount() > 0) $savedCount++;
+    }
+
+    echo json_encode(["status" => "success", "synced" => $savedCount]);
+
+} catch (PDOException $e) {
+    // CAPTURE SQL ERROR
+    // This will tell us exactly which column is missing
+    http_response_code(200); // Send as 200 OK so Javascript can read the error message
+    echo json_encode([
+        "status" => "sql_error",
+        "message" => $e->getMessage()
     ]);
-    if ($stmt->rowCount() > 0) $count++;
+} catch (Exception $e) {
+    // CAPTURE GENERIC ERROR
+    http_response_code(200);
+    echo json_encode([
+        "status" => "php_error",
+        "message" => $e->getMessage()
+    ]);
 }
-
-echo json_encode(["status" => "success", "synced" => $count]);
 ?>
