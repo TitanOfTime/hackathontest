@@ -210,7 +210,7 @@ if (!isset($_SESSION['admin_auth'])):
                 const filterTerm = searchEl ? searchEl.value.toLowerCase().trim() : '';
 
                 map.eachLayer((layer) => { if (!!layer.toGeoJSON) map.removeLayer(layer); });
-                const markers = L.featureGroup();
+                const markers = L.markerClusterGroup();
                 let critical = 0, activeCount = 0, sidebarCount = 0, feedHTML = '', historyHTML = '';
 
                 data.forEach((inc) => {
