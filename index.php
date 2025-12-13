@@ -41,12 +41,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <form method="POST" class="space-y-4">
             <div>
-                <label class="block text-gray-500 text-xs font-bold mb-1">SET CALLSIGN</label>
+                <label class="block text-gray-500 text-xs font-bold mb-1">USERNAME</label>
                 <input type="text" name="username" required autofocus class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 focus:border-blue-500 outline-none text-white" placeholder="e.g. Ranger-1">
             </div>
             <div>
                 <label class="block text-gray-500 text-xs font-bold mb-1">SET PASSWORD</label>
-                <input type="password" name="password" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 focus:border-blue-500 outline-none text-white" placeholder="(Optional)">
+                <input type="password" name="password" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 focus:border-blue-500 outline-none text-white" placeholder="(Required)">
             </div>
             <button class="w-full bg-blue-600 hover:bg-blue-500 font-bold py-4 rounded-xl transition-all mt-4">
                 START SESSION
