@@ -1,42 +1,52 @@
-<?php
-// FORCE ERROR REPORTING
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-?>
-
 <!DOCTYPE html>
-<body style="background:#111; color:#fff; font-family:sans-serif; text-align:center; padding-top:50px;">
-    <h1>Debug Mode</h1>
-    
-    <h3>Step 1: Checking files...</h3>
-    <?php
-    if (file_exists('db.php')) {
-        echo "<p style='color:green'>✅ db.php found.</p>";
-    } else {
-        echo "<p style='color:red'>❌ FATAL: db.php is missing from the root folder.</p>";
-        exit; // Stop here
-    }
-    ?>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Aegis - Live</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
 
-    <h3>Step 2: Testing Connection...</h3>
-    <?php
-    // Try to include and catch syntax errors
-    try {
-        require_once 'db.php'; 
-        // If db.php is successful, $conn variable should exist
-        if (isset($conn)) {
-            echo "<h1 style='color:lime; font-size:40px;'>✅ CONNECTED!</h1>";
-            echo "<p>Host: " . getenv('MYSQLHOST') . "</p>"; // Verify var is read
-        } else {
-            echo "<p style='color:red'>❌ db.php loaded, but \$conn is missing.</p>";
-        }
-    } catch (Throwable $e) {
-        // Catch ANY crash (Syntax error, PDO error, etc)
-        echo "<div style='background:red; color:white; padding:20px;'>";
-        echo "<strong>CRASH REPORT:</strong><br>";
-        echo $e->getMessage();
-        echo "</div>";
-    }
-    ?>
+    <div class="text-center max-w-lg w-full">
+        <h1 class="text-5xl font-bold mb-2 tracking-tighter text-blue-500">AEGIS</h1>
+        <p class="text-gray-400 mb-12 uppercase tracking-widest text-sm">Disaster Response System</p>
+
+        <div class="mb-8">
+            <?php
+            require 'db.php';
+            if (isset($conn)) {
+                echo '<span class="bg-green-900 text-green-300 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide">● System Online</span>';
+            } else {
+                echo '<span class="bg-red-900 text-red-300 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide">● System Offline</span>';
+            }
+            ?>
+        </div>
+        
+        <div class="space-y-4">
+            <a href="app.php" class="block w-full bg-blue-600 hover:bg-blue-500 p-6 rounded-2xl transition-transform transform active:scale-95 shadow-lg border border-blue-500">
+                <div class="flex items-center justify-between">
+                    <div class="text-left">
+                        <h2 class="text-2xl font-bold">Field Responder App</h2>
+                        <p class="text-blue-200 text-sm">Mobile Data Collection</p>
+                    </div>
+                    <span class="text-4xl">📱</span>
+                </div>
+            </a>
+            
+            <a href="dashboard.php" class="block w-full bg-gray-800 hover:bg-gray-700 p-6 rounded-2xl transition-transform transform active:scale-95 shadow-lg border border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div class="text-left">
+                        <h2 class="text-2xl font-bold">HQ Dashboard</h2>
+                        <p class="text-gray-400 text-sm">Live Command Map</p>
+                    </div>
+                    <span class="text-4xl">🗺️</span>
+                </div>
+            </a>
+        </div>
+
+        <p class="mt-12 text-gray-600 text-xs">Aegis v1.0 // Hackathon Build</p>
+    </div>
+
 </body>
+</html>
