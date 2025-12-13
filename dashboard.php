@@ -152,6 +152,8 @@ if (!isset($_SESSION['admin_auth'])):
         // GLOBAL CLUSTER GROUP (For smoother updates)
         const clusterGroup = L.markerClusterGroup();
         map.addLayer(clusterGroup);
+        
+        let markers = {}; // Store marker references
 
         let isPaused = false;
         map.on('popupopen', () => isPaused = true);
@@ -200,6 +202,16 @@ if (!isset($_SESSION['admin_auth'])):
                 if(data.status === 'success') updateDashboard();
             } catch(e) { console.error(e); }
         }
+        
+        // --- ACTION: HIGHLIGHT INCIDENT ---
+        function highlightIncident(id) {
+            const marker = markers[id];
+            if (marker) {
+                clusterGroup.zoomToShowLayer(marker, function() {
+                    marker.openPopup();
+                });
+            }
+        }
 
         // --- DATA PARSER ---
         function parseIncidentData(rawType) {
@@ -232,8 +244,9 @@ if (!isset($_SESSION['admin_auth'])):
                 const searchEl = document.getElementById('search-input');
                 const filterTerm = searchEl ? searchEl.value.toLowerCase().trim() : '';
 
-                // CLEAR CLUSTERS
+                // CLEAR CLUSTERS AND MARKERS
                 clusterGroup.clearLayers();
+                markers = {};
 
                 let critical = 0, activeCount = 0, sidebarCount = 0, feedHTML = '', historyHTML = '';
 
@@ -307,6 +320,7 @@ if (!isset($_SESSION['admin_auth'])):
                         
                         // Add to Cluster Group
                         clusterGroup.addLayer(marker);
+                        markers[inc.id] = marker; // TRACK MARKER
 
                         // --- SIDEBAR FILTER LOGIC ---
                         const sev = parseInt(inc.severity);
@@ -338,7 +352,7 @@ if (!isset($_SESSION['admin_auth'])):
                             const statusText = isInProgress ? '<span class="text-orange-600 font-bold">🚀 TEAM DISPATCHED</span>' : `🕒 ${localTime}`;
 
                             feedHTML += `
-                                <div class="bg-white p-3 rounded-xl border ${borderClass} shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="map.flyTo([${inc.latitude}, ${inc.longitude}], 15)">
+                                <div class="bg-white p-3 rounded-xl border ${borderClass} shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="highlightIncident(${safeId})">
                                     <div class="flex justify-between items-start">
                                         <div>
                                             <p class="font-bold text-gray-800 text-sm">${safeType}</p>
