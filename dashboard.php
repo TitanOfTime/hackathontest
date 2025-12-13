@@ -113,9 +113,12 @@ if (!isset($_SESSION['admin_auth'])):
     <div class="absolute bottom-6 right-6 z-10 w-80 flex flex-col gap-4 max-h-[calc(100vh-50px)] overflow-hidden pointer-events-none">
         
         <div class="glass-panel rounded-2xl overflow-hidden flex flex-col shrink pointer-events-auto max-h-[40vh]">
-            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-white">
-                <h3 class="font-bold text-gray-800">Priority Incidents</h3>
-                <span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase">Live Feed</span>
+            <div class="p-4 border-b border-gray-100 bg-white">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-bold text-gray-800">Priority Incidents</h3>
+                    <span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase">Live Feed</span>
+                </div>
+                <input type="text" id="search-input" placeholder="🔍 Search incidents..." class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500 transition-colors">
             </div>
             <div id="feed-list" class="overflow-y-auto p-2 space-y-2 no-scrollbar bg-gray-50/50">
                 <div class="p-4 text-center text-gray-400 text-sm">Waiting for data...</div>
@@ -202,6 +205,10 @@ if (!isset($_SESSION['admin_auth'])):
                 const res = await fetch('fetch.php');
                 const data = await res.json();
                 
+                // Get current search term
+                const searchEl = document.getElementById('search-input');
+                const filterTerm = searchEl ? searchEl.value.toLowerCase().trim() : '';
+
                 map.eachLayer((layer) => { if (!!layer.toGeoJSON) map.removeLayer(layer); });
                 const markers = L.featureGroup();
                 let critical = 0, activeCount = 0, sidebarCount = 0, feedHTML = '', historyHTML = '';
@@ -281,6 +288,11 @@ if (!isset($_SESSION['admin_auth'])):
                              if (isUrgentType || isSupplies) {
                                  showInSidebar = true;
                              }
+                        }
+                        
+                        // --- NEW: TEXT SEARCH FILTER ---
+                        if (filterTerm && !safeType.toLowerCase().includes(filterTerm)) {
+                            showInSidebar = false;
                         }
 
                         if (showInSidebar && sidebarCount < 20) {
