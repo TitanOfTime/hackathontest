@@ -255,57 +255,25 @@ if (!isset($_SESSION['admin_auth'])):
             }
         }
 
-        // --- ZONE MANAGEMENT ---
-        window.updateZoneColor = function(id, level) {
-            const layer = map._layers[id];
-            if (!layer) return;
-            
-            let color = '#ef4444'; // Red (High)
-            if (level === 'medium') color = '#fbbf24'; // Orange/Yellow
-            if (level === 'low')    color = '#22c55e'; // Green
+        // --- ZONE MANAGEMENT & PERSISTENCE ---
+        
+        function saveZones() {
+            const zones = [];
+            map.eachLayer(layer => {
+                if (layer instanceof L.Circle && layer.severity) {
+                    zones.push({
+                        lat: layer.getLatLng().lat,
+                        lng: layer.getLatLng().lng,
+                        radius: layer.getRadius(),
+                        color: layer.options.color,
+                        severity: layer.severity
+                    });
+                }
+            });
+            localStorage.setItem('aegis_zones', JSON.stringify(zones));
+        }
 
-            layer.setStyle({ color: color, fillColor: color });
-            layer.severity = level; // Save state
-            
-            // Re-open popup to update UI selection border
-            layer.closePopup();
-            layer.openPopup();
-        };
-
-        window.updateZoneRadius = function(id) {
-             const layer = map._layers[id];
-             if (!layer) return;
-             
-             const newR = prompt("Enter new radius (meters):", layer.getRadius());
-             if(newR && !isNaN(newR)) {
-                 layer.setRadius(parseInt(newR));
-                 layer.closePopup();
-                 layer.openPopup();
-             }
-        };
-
-        window.removeZone = function(id) {
-            const layer = map._layers[id];
-            if (layer) map.removeLayer(layer);
-        };
-
-        map.on('click', function(e) {
-            if (!hazardMode) return;
-            
-            // 1. Draw Circle
-            const radius = prompt("Enter Hazard Radius (meters):", "500");
-            if (!radius) return;
-
-            const circle = L.circle(e.latlng, {
-                color: '#ef4444',
-                fillColor: '#ef4444',
-                fillOpacity: 0.3,
-                radius: parseInt(radius)
-            }).addTo(map);
-            
-            circle.severity = 'high'; // Default
-
-            // 2. Bind Interactive Popup
+        function bindZonePopup(circle) {
             circle.bindPopup(() => {
                 const id = circle._leaflet_id;
                 const s = circle.severity;
@@ -331,8 +299,83 @@ if (!isset($_SESSION['admin_auth'])):
                     </div>
                 `;
             });
+        }
 
-            // 3. Count impacted users (Simulated logic using active markers)
+        window.updateZoneColor = function(id, level) {
+            const layer = map._layers[id];
+            if (!layer) return;
+            
+            let color = '#ef4444'; // Red (High)
+            if (level === 'medium') color = '#fbbf24'; // Orange/Yellow
+            if (level === 'low')    color = '#22c55e'; // Green
+
+            layer.setStyle({ color: color, fillColor: color });
+            layer.severity = level; // Save state
+            
+            layer.closePopup();
+            layer.openPopup();
+            saveZones();
+        };
+
+        window.updateZoneRadius = function(id) {
+             const layer = map._layers[id];
+             if (!layer) return;
+             
+             const newR = prompt("Enter new radius (meters):", layer.getRadius());
+             if(newR && !isNaN(newR)) {
+                 layer.setRadius(parseInt(newR));
+                 layer.closePopup();
+                 layer.openPopup();
+                 saveZones();
+             }
+        };
+
+        window.removeZone = function(id) {
+            const layer = map._layers[id];
+            if (layer) { 
+                map.removeLayer(layer);
+                saveZones();
+            }
+        };
+
+        function loadZones() {
+            const stored = localStorage.getItem('aegis_zones');
+            if(!stored) return;
+            try {
+                const zones = JSON.parse(stored);
+                zones.forEach(z => {
+                    const circle = L.circle([z.lat, z.lng], {
+                        color: z.color,
+                        fillColor: z.color,
+                        fillOpacity: 0.3,
+                        radius: z.radius
+                    }).addTo(map);
+                    circle.severity = z.severity;
+                    bindZonePopup(circle);
+                });
+            } catch(e) { console.error("Error loading zones", e); }
+        }
+
+        map.on('click', function(e) {
+            if (!hazardMode) return;
+            
+            // 1. Draw Circle
+            const radius = prompt("Enter Hazard Radius (meters):", "500");
+            if (!radius) return;
+
+            const circle = L.circle(e.latlng, {
+                color: '#ef4444',
+                fillColor: '#ef4444',
+                fillOpacity: 0.3,
+                radius: parseInt(radius)
+            }).addTo(map);
+            
+            circle.severity = 'high'; // Default
+
+            // 2. Bind Interactive Popup
+            bindZonePopup(circle);
+
+            // 3. Count impacted users (Simulated logic)
             let impactedCount = 0;
             for (const id in markers) {
                 const m = markers[id];
@@ -348,9 +391,13 @@ if (!isset($_SESSION['admin_auth'])):
             // Reset Mode
             toggleHazardMode();
             
-            // Auto open menu
+            // Auto open menu & SAVE
             setTimeout(() => circle.openPopup(), 500);
+            saveZones();
         });
+
+        // Load Zones on Startup
+        loadZones();
 
         function formatTime(isoString) { if (!isoString) return 'Unknown'; const date = new Date(isoString); return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
 
