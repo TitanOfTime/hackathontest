@@ -95,9 +95,7 @@ if (!isset($_SESSION['admin_auth'])):
                 <p class="text-3xl font-bold text-red-600" id="crit-count">0</p>
             </div>
         </div>
-    </div>
 
-        <!-- MOVED PANELS TO LEFT COLUMN -->
         <div class="glass-panel rounded-2xl overflow-hidden flex flex-col shrink pointer-events-auto max-h-[40vh]">
             <div class="p-4 border-b border-gray-100 bg-white">
                 <div class="flex justify-between items-center mb-2">
@@ -121,6 +119,7 @@ if (!isset($_SESSION['admin_auth'])):
             </div>
         </div>
     </div>
+
 
     <div class="absolute top-6 right-6 z-10 flex flex-col gap-3 items-end">
         <a href="?logout=true" class="bg-red-900/80 hover:bg-red-800 text-red-200 px-4 py-2 rounded-lg font-bold text-xs backdrop-blur border border-red-700/50 mb-2">🔒 LOGOUT</a>
