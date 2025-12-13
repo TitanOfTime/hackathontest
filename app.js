@@ -259,11 +259,11 @@ function updateStatus() {
     if (!bar) return;
     if (navigator.onLine) {
         bar.textContent = "ONLINE - SYNC READY";
-        bar.className = "text-[10px] font-bold text-center py-1 bg-green-900 text-green-400 uppercase tracking-widest rounded-b-[3rem] mx-4 pb-3 pt-12 -mt-10 shadow-md transition-all duration-300 z-0";
+        bar.className = "text-[10px] font-bold text-center py-1 bg-green-900 text-green-400 uppercase tracking-widest rounded-b-[3rem] pb-3 pt-12 -mt-10 shadow-md transition-all duration-300 z-0";
         trySync();
     } else {
         bar.textContent = "OFFLINE - SAVING LOCALLY";
-        bar.className = "text-[10px] font-bold text-center py-1 bg-red-900 text-red-400 uppercase tracking-widest rounded-b-[3rem] mx-4 pb-3 pt-12 -mt-10 shadow-md transition-all duration-300 z-0";
+        bar.className = "text-[10px] font-bold text-center py-1 bg-red-900 text-red-400 uppercase tracking-widest rounded-b-[3rem] pb-3 pt-12 -mt-10 shadow-md transition-all duration-300 z-0";
     }
 }
 

@@ -55,7 +55,7 @@
             </div>
         </div>
 
-        <div id="status-bar" class="text-[10px] font-bold text-center py-1 pb-3 pt-12 -mt-10 mx-4 rounded-b-[3rem] bg-slate-800 text-slate-500 uppercase tracking-widest z-0 transition-all duration-300 shadow-md">
+        <div id="status-bar" class="text-[10px] font-bold text-center py-1 pb-3 pt-12 -mt-10 rounded-b-[3rem] bg-slate-800 text-slate-500 uppercase tracking-widest z-0 transition-all duration-300 shadow-md">
             Checking Connection...
         </div>
 
