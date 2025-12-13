@@ -97,21 +97,7 @@ if (!isset($_SESSION['admin_auth'])):
         </div>
     </div>
 
-    <div class="absolute top-6 right-6 z-10 flex flex-col gap-3 items-end">
-        <a href="?logout=true" class="bg-red-900/80 hover:bg-red-800 text-red-200 px-4 py-2 rounded-lg font-bold text-xs backdrop-blur border border-red-700/50 mb-2">🔒 LOGOUT</a>
-        
-        <a href="app.php" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg flex items-center gap-2 transition-transform transform active:scale-95">
-            <span class="text-xl">+</span> New Report
-        </a>
-        
-        <div class="glass-panel p-2 rounded-xl flex flex-col gap-2">
-            <button onclick="map.setView([20,0], 2)" class="p-2 hover:bg-gray-100 rounded-lg text-gray-600">🌍</button>
-            <button onclick="location.reload()" class="p-2 hover:bg-gray-100 rounded-lg text-gray-600">🔄</button>
-        </div>
-    </div>
-
-    <div class="absolute bottom-6 right-6 z-10 w-80 flex flex-col gap-4 max-h-[calc(100vh-50px)] overflow-hidden pointer-events-none">
-        
+        <!-- MOVED PANELS TO LEFT COLUMN -->
         <div class="glass-panel rounded-2xl overflow-hidden flex flex-col shrink pointer-events-auto max-h-[40vh]">
             <div class="p-4 border-b border-gray-100 bg-white">
                 <div class="flex justify-between items-center mb-2">
@@ -135,6 +121,21 @@ if (!isset($_SESSION['admin_auth'])):
             </div>
         </div>
     </div>
+
+    <div class="absolute top-6 right-6 z-10 flex flex-col gap-3 items-end">
+        <a href="?logout=true" class="bg-red-900/80 hover:bg-red-800 text-red-200 px-4 py-2 rounded-lg font-bold text-xs backdrop-blur border border-red-700/50 mb-2">🔒 LOGOUT</a>
+        
+        <a href="app.php" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg flex items-center gap-2 transition-transform transform active:scale-95">
+            <span class="text-xl">+</span> New Report
+        </a>
+        
+        <div class="glass-panel p-2 rounded-xl flex flex-col gap-2">
+            <button onclick="map.setView([20,0], 2)" class="p-2 hover:bg-gray-100 rounded-lg text-gray-600">🌍</button>
+            <button onclick="location.reload()" class="p-2 hover:bg-gray-100 rounded-lg text-gray-600">🔄</button>
+        </div>
+    </div>
+
+    <!-- REMOVED RIGHT SIDEBAR CONTAINER -->
 
     <script>
         // SANITIZE INPUT: Prevents hackers from injecting HTML/JS code
@@ -289,7 +290,10 @@ if (!isset($_SESSION['admin_auth'])):
                         }
                         
                         // --- NEW: TEXT SEARCH FILTER ---
-                        if (filterTerm && !safeType.toLowerCase().includes(filterTerm)) {
+                        // Combine all searchable fields into one string
+                        const searchableText = `${fullType} level ${sev} lvl ${sev}`.toLowerCase();
+                        
+                        if (filterTerm && !searchableText.includes(filterTerm)) {
                             showInSidebar = false;
                         }
 
