@@ -281,19 +281,25 @@ if (!isset($_SESSION['admin_auth'])):
                         const isUrgentType = fullType.includes('Medical') || fullType.includes('Rescue') || fullType.includes('Trapped');
                         const isSupplies = fullType.includes('Supplies');
                         
+                        // --- FILTER LOGIC (UPDATED) ---
+                        // Default: Show High Sev OR Urgent.
+                        // Override: If User Searches, show ANY match.
+
                         let showInSidebar = false;
 
-                        // Show if High Severity OR Urgent Needs (regardless of severity)
+                        // 1. Default Priority Logic
                         if (sev >= 4 || isUrgentType) {
                             showInSidebar = true;
                         }
                         
-                        // --- NEW: TEXT SEARCH FILTER ---
-                        // Combine all searchable fields into one string
-                        const searchableText = `${fullType} level ${sev} lvl ${sev}`.toLowerCase();
-                        
-                        if (filterTerm && !searchableText.includes(filterTerm)) {
-                            showInSidebar = false;
+                        // 2. Search Logic (Overrides Default)
+                        if (filterTerm) {
+                            const searchableText = `${fullType} level ${sev} lvl ${sev}`.toLowerCase();
+                            if (searchableText.includes(filterTerm)) {
+                                showInSidebar = true; // FORCE SHOW if search matches
+                            } else {
+                                showInSidebar = false; // FORCE HIDE if search fails
+                            }
                         }
 
                         if (showInSidebar && sidebarCount < 20) {
@@ -328,6 +334,7 @@ if (!isset($_SESSION['admin_auth'])):
             } catch(e) { console.error(e); }
         }
 
+        document.getElementById('search-input').addEventListener('input', updateDashboard);
         setInterval(updateDashboard, 3000);
         updateDashboard();
     </script>
