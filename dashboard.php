@@ -204,11 +204,9 @@ if (!isset($_SESSION['admin_auth'])):
                 
                 map.eachLayer((layer) => { if (!!layer.toGeoJSON) map.removeLayer(layer); });
                 const markers = L.featureGroup();
-                let critical = 0, activeCount = 0, feedHTML = '', historyHTML = '';
+                let critical = 0, activeCount = 0, sidebarCount = 0, feedHTML = '', historyHTML = '';
 
                 data.forEach((inc) => {
-                    const localTime = formatTime(inc.reported_at);
-                    
                     // PARSE DATA
                     const info = parseIncidentData(inc.incident_type);
                     
@@ -265,7 +263,26 @@ if (!isset($_SESSION['admin_auth'])):
                         `);
                         marker.addTo(markers);
 
-                        if (activeCount <= 20) {
+                        // --- FILTER LOGIC FOR SIDEBAR (UPDATED) ---
+                        // Rule 1: Severity > 3 (4 or 5)
+                        // Rule 2: Assistance in [Medical, Rescue, Trapped (SOS)]
+                        // Rule 3: Supplies allowed if >= 4 (Combined with Rule 1)
+                        const sev = parseInt(inc.severity);
+                        const type = info.type; 
+                        
+                        const isUrgentType = type.includes('Medical') || type.includes('Rescue') || type.includes('Trapped');
+                        const isSupplies = type.includes('Supplies');
+                        
+                        let showInSidebar = false;
+
+                        if (sev >= 4) {
+                             if (isUrgentType || isSupplies) {
+                                 showInSidebar = true;
+                             }
+                        }
+
+                        if (showInSidebar && sidebarCount < 20) {
+                            sidebarCount++;
                             // FEED ITEM (Using Safe Data)
                             feedHTML += `
                                 <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="map.flyTo([${inc.latitude}, ${inc.longitude}], 15)">
