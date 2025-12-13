@@ -15,6 +15,11 @@ if (currentUser && loginView) {
     loginView.classList.remove('hidden');
 }
 
+// Always check for badge display (for app.php)
+if (currentUser && document.getElementById('display-badge')) {
+    document.getElementById('display-badge').innerText = currentUser;
+}
+
 if (document.getElementById('login-form')) {
     document.getElementById('login-form').addEventListener('submit', (e) => {
         e.preventDefault();

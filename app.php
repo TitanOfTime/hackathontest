@@ -24,23 +24,27 @@
 
     <div id="app-view" class="max-w-lg mx-auto min-h-screen flex flex-col relative">
         
-        <div class="bg-blue-600 p-6 pt-8 rounded-b-3xl shadow-2xl z-10 relative overflow-hidden">
-            <div class="absolute top-0 right-0 p-4 opacity-10">
-                <i class="fa-solid fa-shield-halved text-9xl"></i>
-            </div>
+        <div class="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8 pb-10 rounded-b-[3rem] shadow-2xl z-10 relative overflow-hidden border-b border-white/10">
+            <!-- decorative bg -->
+            <div class="absolute -top-10 -right-10 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute top-10 -left-10 w-40 h-40 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
             <div class="flex justify-between items-start relative z-10">
                 <div>
-                    <h1 class="text-3xl font-extrabold text-white tracking-tight">Report Incident</h1>
-                    <p class="text-blue-100 text-sm mt-1 opacity-90">Help us respond faster.</p>
+                    <h1 class="text-4xl font-black text-white tracking-tighter drop-shadow-sm">Incidents</h1>
+                    <p class="text-blue-200 text-sm font-medium mt-1 tracking-wide">Rapid Response Unit</p>
                 </div>
-                <button onclick="logout()" class="bg-blue-700/50 hover:bg-blue-700 text-white p-2 rounded-lg backdrop-blur-sm transition">
-                    <i class="fa-solid fa-power-off"></i>
+                <button onclick="logout()" class="bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-md transition-all border border-white/10 shadow-lg active:scale-95">
+                    <i class="fa-solid fa-power-off text-sm"></i>
                 </button>
             </div>
             
-            <div class="mt-4 flex items-center gap-2 text-xs font-bold text-blue-200 bg-blue-800/40 w-fit px-3 py-1 rounded-full border border-blue-400/30 backdrop-blur-md">
-                <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-                ID: <span id="display-badge">Loading...</span>
+            <div class="mt-6 inline-flex items-center gap-3 px-4 py-2 bg-black/30 rounded-full border border-white/10 backdrop-blur-md shadow-inner">
+                <span class="relative flex h-3 w-3">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </span>
+                <span class="text-xs font-bold text-gray-300 tracking-wider">ID: <span id="display-badge" class="text-white font-mono">...</span></span>
             </div>
         </div>
 
