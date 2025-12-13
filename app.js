@@ -377,3 +377,57 @@ function updateQueueUI() {
 window.addEventListener('online', updateStatus);
 window.addEventListener('offline', updateStatus);
 window.addEventListener('load', () => { updateStatus(); updateQueueUI(); });
+
+// --- 6. LIVE STATUS CHECKER (The Feedback Loop) ---
+async function checkMyReports() {
+    // 1. Basic Checks: Online? User logged in?
+    if (!navigator.onLine) return;
+    const user = localStorage.getItem('aegis_user');
+    if (!user) return;
+
+    try {
+        // 2. Ask Server: "What is the status of my reports?"
+        const res = await fetch(`my_status.php?user=${encodeURIComponent(user)}`);
+        const reports = await res.json();
+
+        const list = document.getElementById('my-reports-list');
+        const feed = document.getElementById('status-feed');
+
+        if (!list || !feed) return; // Safety check if elements are missing
+
+        if (reports.length > 0) {
+            feed.classList.remove('hidden'); // Show the box
+            
+            list.innerHTML = reports.map(r => {
+                // Clean up the text (remove tags like [Medical] for cleaner display)
+                let type = r.incident_type.replace(/\[.*?\]/, '').replace(/\(.*?\)/, '').trim();
+                if(type.length > 20) type = type.substring(0, 20) + '...';
+
+                // 3. DECIDE STATUS DISPLAY
+                if (r.status === 'in_progress') {
+                    // CASE A: Admin clicked "Dispatch" -> Show Orange Rocket
+                    return `
+                        <div class="p-3 rounded-lg border border-orange-500/50 bg-orange-500/10 flex justify-between items-center shadow-lg shadow-orange-900/20 transition-all duration-500">
+                            <span class="text-sm font-bold text-white">${type}</span>
+                            <span class="text-orange-400 font-black text-[10px] uppercase animate-pulse">🚀 Team Dispatched</span>
+                        </div>`;
+                } else {
+                    // CASE B: Just submitted -> Show "Received"
+                    return `
+                        <div class="p-3 rounded-lg border border-slate-700 bg-slate-900/50 flex justify-between items-center opacity-70">
+                            <span class="text-sm font-bold text-slate-400">${type}</span>
+                            <span class="text-blue-400 font-bold text-[10px] uppercase">✔ Received</span>
+                        </div>`;
+                }
+            }).join('');
+        } else {
+            feed.classList.add('hidden'); // Hide box if no active reports
+        }
+    } catch (e) { 
+        console.log("Status check fail - retrying in 3s"); 
+    }
+}
+
+// 4. Start the Loop
+setInterval(checkMyReports, 3000); // Check every 3 seconds
+checkMyReports(); // Check immediately on load
