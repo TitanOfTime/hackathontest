@@ -125,6 +125,10 @@ if (!isset($_SESSION['admin_auth'])):
     <div class="absolute top-6 right-6 z-10 flex flex-col gap-3 items-end">
         <a href="?logout=true" class="bg-red-900/80 hover:bg-red-800 text-red-200 px-4 py-2 rounded-lg font-bold text-xs backdrop-blur border border-red-700/50 mb-2">🔒 LOGOUT</a>
         
+        <a href="analytics.php" target="_blank" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg flex items-center gap-2 transition-transform transform active:scale-95 mb-2">
+            <span class="text-xl">📊</span> Analytics & Stats
+        </a>
+
         <a href="app.php" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg flex items-center gap-2 transition-transform transform active:scale-95">
             <span class="text-xl">+</span> New Report
         </a>
@@ -261,6 +265,10 @@ if (!isset($_SESSION['admin_auth'])):
 
                 data.forEach((inc) => {
                     const localTime = formatTime(inc.reported_at);
+                    
+                    // --- 0. SKIP DELETED ---
+                    if (inc.status === 'deleted') return;
+
                     const info = parseIncidentData(inc.incident_type);
                     
                     // --- SANITIZE ---

@@ -13,8 +13,8 @@ if (!isset($data['id'])) {
 }
 
 try {
-    // Permanently delete the row
-    $stmt = $conn->prepare("DELETE FROM incidents WHERE id = ?");
+    // Soft delete: Mark as 'deleted' so it doesn't show in dashboard but counts for analytics
+    $stmt = $conn->prepare("UPDATE incidents SET status = 'deleted' WHERE id = ?");
     $stmt->execute([$data['id']]);
 
     if ($stmt->rowCount() > 0) {
