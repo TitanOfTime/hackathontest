@@ -1,0 +1,15 @@
+{
+  "name": "Aegis Disaster Response",
+  "short_name": "Aegis",
+  "start_url": "/app.php",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/564/564619.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
