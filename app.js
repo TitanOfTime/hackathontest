@@ -63,7 +63,13 @@ function updateHiddenData() {
 
     // Append Headcount (e.g. " (5 Pax)")
     if (count && count > 0) {
-        finalType += " (" + count + " Pax)";
+        // Validation: Force Integer
+        const intCount = Math.floor(count);
+        if (intCount !== Number(count)) {
+            // If they managed to type a decimal, fix it visibly
+            headcountInput.value = intCount;
+        }
+        finalType += " (" + intCount + " Pax)";
     }
 
     // UPDATE HIDDEN INPUT IMMEDIATELY
