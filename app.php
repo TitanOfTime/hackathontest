@@ -37,6 +37,22 @@
             <input type="hidden" id="lat" value="0"><input type="hidden" id="lng" value="0">
 
             <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 py-5 rounded-xl font-bold text-xl shadow-lg transition-transform transform active:scale-95">
+                <div class="mb-6">
+        <label class="block mb-2 text-gray-400">Photo Evidence</label>
+        
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
+        
+        <button type="button" onclick="document.getElementById('cameraInput').click()" 
+                class="w-full bg-gray-800 hover:bg-gray-700 text-blue-400 border border-blue-900 border-dashed p-4 rounded-xl flex items-center justify-center gap-2 transition-all">
+            <span class="text-2xl">📷</span>
+            <span class="font-bold">Attach Photo</span>
+        </button>
+        
+        <div id="preview-area" class="mt-3 hidden">
+            <p class="text-xs text-green-400 mb-1 text-center">✓ Photo Compressed & Ready</p>
+            <img id="preview-img" class="w-full h-40 object-cover rounded-lg border border-gray-600">
+        </div>
+    </div>
                 SUBMIT REPORT
             </button>
         </form>

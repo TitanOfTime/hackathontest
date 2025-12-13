@@ -21,20 +21,61 @@
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
         // Polling Loop
+        // 3. Polling Loop (UPDATED FOR IMAGES)
         async function updateMap() {
-            const res = await fetch('fetch.php');
-            const data = await res.json();
-            
-            // Clear existing markers (simple way)
-            // Ideally use a layerGroup but this works for MVP
-            
-            data.forEach(inc => {
-                let color = inc.severity >= 4 ? 'red' : 'blue';
-                // Simple marker for now
-                L.marker([inc.latitude, inc.longitude])
-                 .addTo(map)
-                 .bindPopup(`<b>${inc.incident_type}</b><br>Sev: ${inc.severity}<br>${inc.reported_at}`);
-            });
+            try {
+                const res = await fetch('fetch.php');
+                const data = await res.json();
+                
+                // Clear old layers
+                map.eachLayer((layer) => {
+                    if (!!layer.toGeoJSON) {
+                        map.removeLayer(layer);
+                    }
+                });
+
+                // Update Counts
+                let critical = 0;
+                
+                data.forEach(inc => {
+                    if(inc.severity >= 4) critical++;
+                    
+                    // Choose Icon
+                    let iconToUse = (inc.severity >= 4) ? redIcon : blueIcon;
+                    
+                    // --- NEW IMAGE LOGIC STARTS HERE ---
+                    let imageHtml = '';
+                    // Check if image data exists and is long enough to be a real image
+                    if (inc.image_data && inc.image_data.length > 100) {
+                        imageHtml = `
+                            <div class="mt-2">
+                                <img src="${inc.image_data}" style="width:100%; height:auto; border-radius:8px; border:2px solid #ccc;">
+                            </div>
+                        `;
+                    }
+                    // --- NEW IMAGE LOGIC ENDS HERE ---
+
+                    // Create Marker with Popup
+                    L.marker([inc.latitude, inc.longitude], {icon: iconToUse})
+                     .addTo(map)
+                     .bindPopup(`
+                        <div class="text-center" style="min-width: 200px">
+                            <strong class="text-lg uppercase tracking-wide">${inc.incident_type}</strong><br>
+                            <span class="${inc.severity >= 4 ? 'text-red-600 font-bold' : 'text-blue-600'}">
+                                Severity Level: ${inc.severity}
+                            </span><br>
+                            <span class="text-gray-500 text-xs">${inc.reported_at}</span>
+                            ${imageHtml} </div>
+                     `);
+                });
+
+                // Update Header Stats (if elements exist)
+                if(document.getElementById('crit-count')) {
+                    document.getElementById('crit-count').innerText = critical;
+                    document.getElementById('total-count').innerText = data.length;
+                }
+
+            } catch(e) { console.log("Map poll error", e); }
         }
         setInterval(updateMap, 3000);
         updateMap();
