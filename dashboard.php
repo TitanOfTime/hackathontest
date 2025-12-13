@@ -255,6 +255,40 @@ if (!isset($_SESSION['admin_auth'])):
             }
         }
 
+        // --- ZONE MANAGEMENT ---
+        window.updateZoneColor = function(id, level) {
+            const layer = map._layers[id];
+            if (!layer) return;
+            
+            let color = '#ef4444'; // Red (High)
+            if (level === 'medium') color = '#fbbf24'; // Orange/Yellow
+            if (level === 'low')    color = '#22c55e'; // Green
+
+            layer.setStyle({ color: color, fillColor: color });
+            layer.severity = level; // Save state
+            
+            // Re-open popup to update UI selection border
+            layer.closePopup();
+            layer.openPopup();
+        };
+
+        window.updateZoneRadius = function(id) {
+             const layer = map._layers[id];
+             if (!layer) return;
+             
+             const newR = prompt("Enter new radius (meters):", layer.getRadius());
+             if(newR && !isNaN(newR)) {
+                 layer.setRadius(parseInt(newR));
+                 layer.closePopup();
+                 layer.openPopup();
+             }
+        };
+
+        window.removeZone = function(id) {
+            const layer = map._layers[id];
+            if (layer) map.removeLayer(layer);
+        };
+
         map.on('click', function(e) {
             if (!hazardMode) return;
             
@@ -263,29 +297,59 @@ if (!isset($_SESSION['admin_auth'])):
             if (!radius) return;
 
             const circle = L.circle(e.latlng, {
-                color: 'red',
-                fillColor: '#f03',
+                color: '#ef4444',
+                fillColor: '#ef4444',
                 fillOpacity: 0.3,
                 radius: parseInt(radius)
             }).addTo(map);
+            
+            circle.severity = 'high'; // Default
 
-            // 2. Count impacted users (Simulated logic using active markers)
+            // 2. Bind Interactive Popup
+            circle.bindPopup(() => {
+                const id = circle._leaflet_id;
+                const s = circle.severity;
+                return `
+                    <div class="text-center font-sans">
+                        <p class="font-bold text-gray-700 text-xs mb-2 uppercase tracking-wider">Zone Controls</p>
+                        
+                        <div class="flex justify-center gap-2 mb-3">
+                            <button onclick="updateZoneColor(${id}, 'high')" title="High Risk" class="w-6 h-6 rounded-full bg-red-500 border-2 ${s === 'high' ? 'border-gray-900 scale-110' : 'border-transparent'} shadow-sm"></button>
+                            <button onclick="updateZoneColor(${id}, 'medium')" title="Medium Risk" class="w-6 h-6 rounded-full bg-amber-400 border-2 ${s === 'medium' ? 'border-gray-900 scale-110' : 'border-transparent'} shadow-sm"></button>
+                            <button onclick="updateZoneColor(${id}, 'low')" title="Low Risk" class="w-6 h-6 rounded-full bg-green-500 border-2 ${s === 'low' ? 'border-gray-900 scale-110' : 'border-transparent'} shadow-sm"></button>
+                        </div>
+
+                        <div class="flex gap-1 justify-center mb-2">
+                            <button onclick="updateZoneRadius(${id})" class="bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-700 text-[10px] font-bold px-2 py-1 rounded">
+                                R: ${circle.getRadius()}m
+                            </button>
+                            <button onclick="removeZone(${id})" class="bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 text-[10px] font-bold px-2 py-1 rounded">
+                                Delete
+                            </button>
+                        </div>
+                        <p class="text-[9px] text-gray-400">ID: ${id}</p>
+                    </div>
+                `;
+            });
+
+            // 3. Count impacted users (Simulated logic using active markers)
             let impactedCount = 0;
             for (const id in markers) {
                 const m = markers[id];
                 const d = map.distance(e.latlng, m.getLatLng());
-                if (d <= radius) impactedCount++;
+                if (d <= parseInt(radius)) impactedCount++;
             }
 
-            // 3. Send Alert
-            if(confirm(`⚠️ DANGER ZONE CREATED\n\n${impactedCount} active incidents found in this area.\n\nBroadcast "EVACUATE" push notification to all users in this zone?`)) {
+            // 4. Send Initial Alert
+            if(confirm(`⚠️ ZONE CREATED\n\n${impactedCount} active incidents found in this area.\n\nBroadcast "EVACUATE" push notification to all users in this zone?`)) {
                 alert("📡 ALERT SENT: Push notification dispatched to devices in geofence.");
-            } else {
-                map.removeLayer(circle);
             }
 
             // Reset Mode
             toggleHazardMode();
+            
+            // Auto open menu
+            setTimeout(() => circle.openPopup(), 500);
         });
 
         function formatTime(isoString) { if (!isoString) return 'Unknown'; const date = new Date(isoString); return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
