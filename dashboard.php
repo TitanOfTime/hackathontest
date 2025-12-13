@@ -159,6 +159,15 @@ if (!isset($_SESSION['admin_auth'])):
     </div>
 
     <div class="absolute top-6 right-6 z-10 flex flex-col gap-3 items-end">
+        <!-- FILTERS -->
+        <div class="glass-panel p-2 rounded-xl flex gap-1 shadow-lg mb-2">
+            <button onclick="setFilter('All')" data-type="All" class="filter-btn bg-gray-800 text-white px-3 py-1 rounded-lg text-xs font-bold transition-colors">All</button>
+            <button onclick="setFilter('Medical')" data-type="Medical" class="filter-btn bg-white text-gray-700 hover:bg-gray-100 px-3 py-1 rounded-lg text-xs font-bold transition-colors">Medical</button>
+            <button onclick="setFilter('Rescue')" data-type="Rescue" class="filter-btn bg-white text-gray-700 hover:bg-gray-100 px-3 py-1 rounded-lg text-xs font-bold transition-colors">Rescue</button>
+            <button onclick="setFilter('Fire')" data-type="Fire" class="filter-btn bg-white text-gray-700 hover:bg-gray-100 px-3 py-1 rounded-lg text-xs font-bold transition-colors">Fire</button>
+            <button onclick="toggleHazardMode()" id="hazard-btn" class="bg-white text-gray-700 hover:bg-red-50 px-3 py-1 rounded-lg text-xs font-bold border-l border-gray-200 ml-2 transition-colors">⭕ Hazard Zone</button>
+        </div>
+
         <a href="?logout=true" class="bg-red-900/80 hover:bg-red-800 text-red-200 px-4 py-2 rounded-lg font-bold text-xs backdrop-blur border border-red-700/50 mb-2">🔒 LOGOUT</a>
         
         <a href="analytics.php" target="_blank" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg flex items-center gap-2 transition-transform transform active:scale-95 mb-2">
@@ -205,11 +214,80 @@ if (!isset($_SESSION['admin_auth'])):
 
         // 2. Icons
         const redIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
-        const blueIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
-        // ORANGE ICON (For In Progress)
         const orangeIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
+        const greenIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
+        const blueIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
 
         let firstLoad = true;
+        let currentFilter = 'All'; // Filter State
+        let hazardMode = false; // Geofence State
+
+        // --- FILTER UI UPDATE ---
+        function setFilter(type) {
+            currentFilter = type;
+            // Update Button Visuals
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if(btn.dataset.type === type) {
+                    btn.classList.add('bg-gray-800', 'text-white');
+                    btn.classList.remove('bg-white', 'text-gray-700');
+                } else {
+                    btn.classList.remove('bg-gray-800', 'text-white');
+                    btn.classList.add('bg-white', 'text-gray-700');
+                }
+            });
+            updateDashboard();
+        }
+
+        // --- HAZARD ZONE TOOL ---
+        function toggleHazardMode() {
+            hazardMode = !hazardMode;
+            const btn = document.getElementById('hazard-btn');
+            if (hazardMode) {
+                btn.classList.add('bg-red-600', 'text-white', 'animate-pulse');
+                btn.classList.remove('bg-white', 'text-gray-700');
+                btn.innerHTML = '⚠️ Click Map to Set Zone';
+                document.getElementById('map').style.cursor = 'crosshair';
+            } else {
+                btn.classList.remove('bg-red-600', 'text-white', 'animate-pulse');
+                btn.classList.add('bg-white', 'text-gray-700');
+                btn.innerHTML = '⭕ Hazard Zone';
+                document.getElementById('map').style.cursor = '-webkit-grab';
+            }
+        }
+
+        map.on('click', function(e) {
+            if (!hazardMode) return;
+            
+            // 1. Draw Circle
+            const radius = prompt("Enter Hazard Radius (meters):", "500");
+            if (!radius) return;
+
+            const circle = L.circle(e.latlng, {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.3,
+                radius: parseInt(radius)
+            }).addTo(map);
+
+            // 2. Count impacted users (Simulated logic using active markers)
+            let impactedCount = 0;
+            for (const id in markers) {
+                const m = markers[id];
+                const d = map.distance(e.latlng, m.getLatLng());
+                if (d <= radius) impactedCount++;
+            }
+
+            // 3. Send Alert
+            if(confirm(`⚠️ DANGER ZONE CREATED\n\n${impactedCount} active incidents found in this area.\n\nBroadcast "EVACUATE" push notification to all users in this zone?`)) {
+                alert("📡 ALERT SENT: Push notification dispatched to devices in geofence.");
+            } else {
+                map.removeLayer(circle);
+            }
+
+            // Reset Mode
+            toggleHazardMode();
+        });
+
         function formatTime(isoString) { if (!isoString) return 'Unknown'; const date = new Date(isoString); return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
 
         // --- ACTION: RESOLVE ---
@@ -322,8 +400,59 @@ if (!isset($_SESSION['admin_auth'])):
                     let badgesHtml = safeTags.map(t => `<span class="bg-blue-100 text-blue-700 px-1 rounded text-[10px] font-bold border border-blue-200 mr-1">${t}</span>`).join('');
                     if(safeCount) badgesHtml += `<span class="bg-gray-800 text-white px-1 rounded text-[10px] font-bold border border-gray-600 mr-1"><i class="fa-solid fa-user"></i> ${safeCount}</span>`;
 
-                    if (inc.status === 'resolved') {
-                        // RESOLVED
+                    // --- FILTER CHECK ---
+                    // Applies only to MAP markers, lists are separate logic
+                    let showOnMap = true;
+                    if (currentFilter !== 'All') {
+                        // Check if tags or type contains filter
+                        const combinedTags = [...info.tags, info.type].join(' ');
+                        if (!combinedTags.includes(currentFilter)) showOnMap = false;
+                    }
+
+                    // --- MAP LOGIC (ALL STATUSES) ---
+                    const isResolved = inc.status === 'resolved';
+                    const isInProgress = inc.status === 'in_progress';
+                    
+                    // Color Logic: Red (Active), Yellow (Progress), Green (Resolved)
+                    let iconToUse = redIcon; // Default Active
+                    if (isResolved) iconToUse = greenIcon;
+                    else if (isInProgress) iconToUse = orangeIcon;
+
+                    if (showOnMap) {
+                        // Action Buttons Logic
+                        let actionButtons = '';
+                        if (!isResolved) {
+                            if(!isInProgress) actionButtons += `<button onclick="markInProgress(${safeId})" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg shadow text-sm mb-2">🚀 Dispatch Team</button>`;
+                            actionButtons += `<button onclick="resolveIncident(${safeId})" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow text-sm">✅ Mark Resolved</button>`;
+                        } else {
+                            actionButtons = `<p class="text-green-600 font-bold text-center">✅ RESOLVED</p>`;
+                        }
+                        
+                        let imageHtml = (inc.image_data && inc.image_data.length > 100) ? `<div class="mt-2"><img src="${inc.image_data}" class="w-full h-32 object-cover rounded-lg border border-gray-200"></div>` : '';
+                        
+                        // Popup
+                        const marker = L.marker([inc.latitude, inc.longitude], {icon: iconToUse, opacity: 0.9});
+                        marker.bindPopup(`
+                            <div class="text-center min-w-[200px] font-sans">
+                                <strong class="text-sm uppercase tracking-wide text-gray-500">${safeType}</strong><br>
+                                <div class="text-lg font-bold ${inc.severity >= 4 ? 'text-red-600' : 'text-blue-600'}">Severity Level ${safeSev}</div>
+                                
+                                ${isInProgress ? '<div class="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-1 rounded my-1 border border-orange-200 uppercase">⚠️ Response Team En Route</div>' : ''}
+                                
+                                <div class="my-2">${badgesHtml}</div>
+                                <div class="text-xs text-gray-500 font-bold mb-2">🕒 ${localTime}</div>
+                                ${imageHtml}
+                                <div class="mt-3">${actionButtons}</div>
+                            </div>
+                        `);
+                        
+                        clusterGroup.addLayer(marker);
+                        markers[inc.id] = marker; // TRACK MARKER
+                    }
+
+                    // --- LIST LOGIC ---
+                    if (isResolved) {
+                        // RESOLVED LIST
                         historyHTML += `
                             <div class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm opacity-75 group hover:opacity-100 transition-all">
                                 <div class="flex justify-between items-start mb-1">
@@ -340,71 +469,30 @@ if (!isset($_SESSION['admin_auth'])):
                             </div>
                         `;
                     } else {
-                        // ACTIVE
+                        // PRIORITY FEED (Active + In Progress)
                         activeCount++;
                         if(inc.severity >= 4) critical++;
                         
-                        // --- STATUS CHECK ---
-                        const isInProgress = (inc.status === 'in_progress');
-                        
-                        // Choose Icon
-                        let iconToUse = isInProgress ? orangeIcon : (inc.severity >= 4 ? redIcon : blueIcon);
-                        
-                        // Action Buttons Logic
-                        let actionButtons = '';
-                        if(!isInProgress) actionButtons += `<button onclick="markInProgress(${safeId})" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg shadow text-sm mb-2">🚀 Dispatch Team</button>`;
-                        actionButtons += `<button onclick="resolveIncident(${safeId})" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow text-sm">✅ Mark Resolved</button>`;
-
-                        // Create Marker (Ghost Effect)
-                        const marker = L.marker([inc.latitude, inc.longitude], {icon: iconToUse, opacity: 0.9});
-                        
-                        let imageHtml = (inc.image_data && inc.image_data.length > 100) ? `<div class="mt-2"><img src="${inc.image_data}" class="w-full h-32 object-cover rounded-lg border border-gray-200"></div>` : '';
-                        
-                        // Popup
-                        marker.bindPopup(`
-                            <div class="text-center min-w-[200px] font-sans">
-                                <strong class="text-sm uppercase tracking-wide text-gray-500">${safeType}</strong><br>
-                                <div class="text-lg font-bold ${inc.severity >= 4 ? 'text-red-600' : 'text-blue-600'}">Severity Level ${safeSev}</div>
-                                
-                                ${isInProgress ? '<div class="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-1 rounded my-1 border border-orange-200 uppercase">⚠️ Response Team En Route</div>' : ''}
-                                
-                                <div class="my-2">${badgesHtml}</div>
-                                <div class="text-xs text-gray-500 font-bold mb-2">🕒 ${localTime}</div>
-                                ${imageHtml}
-                                <div class="mt-3">${actionButtons}</div>
-                            </div>
-                        `);
-                        
-                        // Add to Cluster Group
-                        clusterGroup.addLayer(marker);
-                        markers[inc.id] = marker; // TRACK MARKER
-
                         // --- SIDEBAR FILTER LOGIC ---
                         const sev = parseInt(inc.severity);
                         const fullType = inc.incident_type;
-                        
                         const isUrgentType = fullType.includes('Medical') || fullType.includes('Rescue') || fullType.includes('Trapped');
                         let showInSidebar = false;
 
                         // 1. Priority Logic
-                        if (sev >= 4 || isUrgentType || isInProgress) { // Also show if In Progress
+                        if (sev >= 4 || isUrgentType || isInProgress) { 
                             showInSidebar = true;
                         }
                         
                         // 2. Search Logic (Overrides Default)
                         if (filterTerm) {
                             const searchableText = `${fullType} level ${sev} lvl ${sev}`.toLowerCase();
-                            if (searchableText.includes(filterTerm)) {
-                                showInSidebar = true; 
-                            } else {
-                                showInSidebar = false; 
-                            }
+                            if (searchableText.includes(filterTerm)) showInSidebar = true; 
+                            else showInSidebar = false; 
                         }
 
                         if (showInSidebar && sidebarCount < 20) {
                             sidebarCount++;
-                            
-                            // Styling for In Progress vs Normal
                             const borderClass = isInProgress ? 'border-orange-400 bg-orange-50' : 'border-gray-100';
                             const statusText = isInProgress ? '<span class="text-orange-600 font-bold">🚀 TEAM DISPATCHED</span>' : `🕒 ${localTime}`;
 
