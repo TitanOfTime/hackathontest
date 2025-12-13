@@ -69,18 +69,18 @@
 
         <!-- CHARTS ROW 1 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="glass-panel min-h-[400px]">
-                <h3 class="font-bold text-gray-800 mb-4">Incident Types Overview</h3>
-                <canvas id="typeChart"></canvas>
+            <div class="glass-panel h-[350px] flex flex-col">
+                <h3 class="font-bold text-gray-800 mb-2">Incident Types Overview</h3>
+                <div class="flex-1 relative">
+                    <canvas id="typeChart"></canvas>
+                </div>
             </div>
-            <div class="glass-panel min-h-[400px]">
-                <h3 class="font-bold text-gray-800 mb-4">Status Distribution</h3>
-                <div class="h-64 flex justify-center">
+            <div class="glass-panel h-[350px] flex flex-col">
+                <h3 class="font-bold text-gray-800 mb-2">Status Distribution</h3>
+                <div class="flex-1 relative flex justify-center items-center">
                     <canvas id="statusChart"></canvas>
                 </div>
-                <div class="mt-4 text-center text-sm text-gray-500">
-                    Includes Active, Resolved, and <span class="text-red-500 font-bold">Deleted</span> records.
-                </div>
+                <!-- Legend removed from here, ChartJS handles it better -->
             </div>
         </div>
 
