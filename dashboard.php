@@ -158,7 +158,8 @@ if (!isset($_SESSION['admin_auth'])):
         let isPaused = false;
         map.on('popupopen', () => isPaused = true);
         map.on('popupclose', () => { 
-            isPaused = false; 
+            isPaused = false;
+            if (window.popupTimer) clearTimeout(window.popupTimer);
             updateDashboard(); 
         });
 
@@ -207,8 +208,13 @@ if (!isset($_SESSION['admin_auth'])):
         function highlightIncident(id) {
             const marker = markers[id];
             if (marker) {
+                if (window.popupTimer) clearTimeout(window.popupTimer);
                 clusterGroup.zoomToShowLayer(marker, function() {
                     marker.openPopup();
+                    // Auto-close after 10 seconds
+                    window.popupTimer = setTimeout(() => {
+                        marker.closePopup();
+                    }, 10000);
                 });
             }
         }
@@ -240,6 +246,9 @@ if (!isset($_SESSION['admin_auth'])):
                 const res = await fetch('fetch.php');
                 const data = await res.json();
                 
+                // CRITICAL FIX: Ensure we didn't pause while fetching
+                if (isPaused) return;
+
                 // Get current search term
                 const searchEl = document.getElementById('search-input');
                 const filterTerm = searchEl ? searchEl.value.toLowerCase().trim() : '';
