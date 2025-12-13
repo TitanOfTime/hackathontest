@@ -161,14 +161,16 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+<script src="app.js"></script>
     <script>
-        // --- UI LOGIC ONLY ---
-        
-        // 1. Badge Display
+        // --- 1. SETUP ---
         document.getElementById('display-badge').innerText = localStorage.getItem('aegis_user') || 'Unknown';
+        
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+        }
 
-        // 2. Logout Logic
         function logout() {
             if(confirm("End Session?")) {
                 localStorage.removeItem('aegis_auth');
@@ -177,83 +179,78 @@
             }
         }
 
-        // 3. Severity Bubble Logic
+        // --- 2. REAL-TIME DATA PACKER ---
+        // We update the hidden input INSTANTLY whenever you touch anything.
+        
+        let activeHelp = []; 
+
+        function updateHiddenData() {
+            const baseType = document.getElementById('type-select').value;
+            const count = document.getElementById('headcount').value;
+            
+            let finalType = baseType;
+            
+            // Append Tags
+            if(activeHelp.length > 0) {
+                finalType += " [" + activeHelp.join(", ") + "]";
+            }
+            
+            // Append Headcount
+            if(count && count > 0) {
+                finalType += " (" + count + " Pax)";
+            }
+            
+            // UPDATE HIDDEN INPUT IMMEDIATELY
+            document.getElementById('type').value = finalType;
+            console.log("Data Ready to Send:", finalType); 
+        }
+
+        // --- 3. UI INTERACTION LOGIC ---
+
+        // Dropdown Change
+        document.getElementById('type-select').addEventListener('change', updateHiddenData);
+        
+        // Headcount Change
+        document.getElementById('headcount').addEventListener('input', updateHiddenData);
+
+        // Severity Bubbles
         function setSeverity(val) {
             document.getElementById('severity').value = val;
             document.getElementById('sev-display').innerText = val;
             
-            // Visual Update
             const btns = document.querySelectorAll('.severity-btn');
             btns.forEach(btn => {
                 btn.className = "severity-btn w-10 h-10 rounded-full border border-slate-600 bg-slate-700 text-slate-300 font-bold transition-all flex items-center justify-center";
                 if(parseInt(btn.innerText) === val) {
-                    // Active Style (Yellow)
                     btn.className = "severity-btn w-10 h-10 rounded-full border-yellow-500/50 bg-yellow-500 text-black font-bold transition-all flex items-center justify-center active scale-110 shadow-[0_0_15px_rgba(234,179,8,0.3)]";
                 }
             });
         }
 
-        // 4. Assistance Button Logic (FIXED)
-        let activeHelp = []; // This stores your ["Medical", "Trapped", etc.]
-        
+        // Assistance Buttons
         function toggleHelp(btn, type) {
-            // Check if already selected
             if(activeHelp.includes(type)) {
-                // Remove it
                 activeHelp = activeHelp.filter(i => i !== type);
-                
-                // Update UI (Inactive Look)
                 btn.classList.remove('active', 'bg-blue-600', 'border-blue-500');
                 btn.classList.add('bg-slate-800', 'border-slate-600');
             } else {
-                // Add it
                 activeHelp.push(type);
-                
-                // Update UI (Active Look)
                 btn.classList.remove('bg-slate-800', 'border-slate-600');
                 btn.classList.add('active', 'bg-blue-600', 'border-blue-500');
             }
-            console.log("Current Selection:", activeHelp); // Debugging
+            
+            // Trigger Update Immediately
+            updateHiddenData();
         }
 
-        // 5. Data Packer (FIXED)
-        document.getElementById('incident-form').addEventListener('submit', (e) => {
-            // 1. Get Base Values
-            const baseType = document.getElementById('type-select').value;
-            const count = document.getElementById('headcount').value;
-            
-            // 2. Start building the string
-            let finalType = baseType;
-            
-            // 3. Append Help Needs (The crucial part)
-            if(activeHelp.length > 0) {
-                // Joins with comma: " [Medical, Rescue, Supplies]"
-                finalType += " [" + activeHelp.join(", ") + "]"; 
-            }
-            
-            // 4. Append Headcount
-            if(count && count > 0) {
-                finalType += " (" + count + " Pax)";
-            }
-            
-            // 5. Update the HIDDEN input that actually gets sent
-            document.getElementById('type').value = finalType;
-            
-            console.log("Sending Type:", finalType); // Debugging: Check console to see what sends
-        });
-
-        // 6. Image Clear
+        // 4. Image Logic
         function clearImage() {
             document.getElementById('cameraInput').value = "";
             document.getElementById('preview-area').classList.add('hidden');
-            // Reset variable in app.js context if possible, 
-            // but app.js listens to change event, so next upload will overwrite.
         }
 
-        // Register Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
-        }
+        // Initial Run to set default values
+        updateHiddenData();
     </script>
 </body>
 </html>
