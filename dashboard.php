@@ -56,6 +56,9 @@ if (!isset($_SESSION['admin_auth'])):
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
@@ -191,8 +194,11 @@ if (!isset($_SESSION['admin_auth'])):
                 const res = await fetch('fetch.php');
                 const data = await res.json();
                 
-                map.eachLayer((layer) => { if (!!layer.toGeoJSON) map.removeLayer(layer); });
-                const markers = L.featureGroup();
+                map.eachLayer((layer) => { 
+                    if (!!layer.toGeoJSON && !layer._url) map.removeLayer(layer); 
+                });
+                
+                const markers = L.markerClusterGroup();
                 let critical = 0, activeCount = 0, feedHTML = '', historyHTML = '';
 
                 data.forEach((inc) => {
@@ -240,7 +246,7 @@ if (!isset($_SESSION['admin_auth'])):
                                 <button onclick="resolveIncident(${inc.id})" class="mt-3 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow text-sm">✅ Mark Resolved</button>
                             </div>
                         `);
-                        marker.addTo(markers);
+                        markers.addLayer(marker);
 
                         if (activeCount <= 20) {
                             feedHTML += `
@@ -259,7 +265,7 @@ if (!isset($_SESSION['admin_auth'])):
                     }
                 });
                 
-                markers.addTo(map);
+                map.addLayer(markers);
                 document.getElementById('feed-list').innerHTML = feedHTML || '<div class="p-4 text-center text-gray-400 text-sm">No active incidents</div>';
                 document.getElementById('history-list').innerHTML = historyHTML || '<div class="p-4 text-center text-gray-400 text-sm">No mission history yet</div>';
                 document.getElementById('total-count').innerText = activeCount;
