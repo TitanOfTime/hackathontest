@@ -18,14 +18,12 @@
         .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
     </style>
     <script>
-        // SECURITY CHECK: Redirect to login if no auth token found
+        // SECURITY CHECK
         if (!localStorage.getItem('aegis_auth')) {
             window.location.href = 'index.php';
         } else {
-            // Reveal App only if authorized
             document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('app-view').classList.remove('hidden');
-                // Set Badge ID
                 document.getElementById('display-badge').innerText = localStorage.getItem('aegis_user') || 'Unknown';
             });
         }
@@ -34,11 +32,9 @@
 <body class="bg-[#0f172a] text-slate-200 min-h-screen pb-20">
 
     <div id="app-view" class="hidden max-w-lg mx-auto min-h-screen flex flex-col relative">
-        
         <div class="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8 pb-10 rounded-b-[3rem] shadow-2xl z-10 relative overflow-hidden border-b border-white/10">
             <div class="absolute -top-10 -right-10 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
             <div class="absolute top-10 -left-10 w-40 h-40 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none"></div>
-
             <div class="flex justify-between items-start relative z-10">
                 <div>
                     <h1 class="text-4xl font-black text-white tracking-tighter drop-shadow-sm">Aegis</h1>
@@ -48,7 +44,6 @@
                     <i class="fa-solid fa-power-off text-sm"></i>
                 </button>
             </div>
-            
             <div class="mt-6 inline-flex items-center gap-3 px-4 py-2 bg-black/30 rounded-full border border-white/10 backdrop-blur-md shadow-inner">
                 <span class="relative flex h-3 w-3">
                   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -63,9 +58,7 @@
         </div>
 
         <div class="p-5 -mt-2 space-y-6">
-            
             <form id="incident-form" class="space-y-6">
-                
                 <div class="space-y-2">
                     <label class="text-sm font-semibold text-slate-400 uppercase tracking-wide">Incident Type</label>
                     <div class="relative">
@@ -100,7 +93,6 @@
                             Level <span id="sev-display">3</span>
                         </span>
                     </div>
-                    
                     <div class="flex justify-between items-center bg-slate-800 p-2 rounded-2xl border border-slate-700 shadow-inner">
                         <span class="text-[10px] font-bold text-slate-500 pl-2">MINOR</span>
                         <div class="flex gap-2">
@@ -117,34 +109,24 @@
 
                 <div class="p-4 bg-slate-800/50 rounded-2xl border border-slate-700/50">
                     <label class="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3 block">Assistance Needed</label>
-                    
                     <div class="grid grid-cols-2 gap-3 mb-4">
                         <button type="button" class="help-btn p-3 rounded-xl bg-slate-800 border border-slate-600 flex flex-col items-center gap-2 transition-all hover:bg-slate-700 active:scale-95 active:bg-slate-600" onclick="toggleHelp(this, 'Medical')">
-                            <i class="fa-solid fa-truck-medical text-xl text-red-400"></i>
-                            <span class="text-xs font-bold text-slate-300">Medical</span>
+                            <i class="fa-solid fa-truck-medical text-xl text-red-400"></i> <span class="text-xs font-bold text-slate-300">Medical</span>
                         </button>
-                        
                         <button type="button" class="help-btn p-3 rounded-xl bg-slate-800 border border-slate-600 flex flex-col items-center gap-2 transition-all hover:bg-slate-700 active:scale-95 active:bg-slate-600" onclick="toggleHelp(this, 'Trapped')">
-                            <i class="fa-solid fa-life-ring text-xl text-pink-500"></i>
-                            <span class="text-xs font-bold text-slate-300">Trapped (SOS)</span>
+                            <i class="fa-solid fa-life-ring text-xl text-pink-500"></i> <span class="text-xs font-bold text-slate-300">Trapped (SOS)</span>
                         </button>
-                        
                         <button type="button" class="help-btn p-3 rounded-xl bg-slate-800 border border-slate-600 flex flex-col items-center gap-2 transition-all hover:bg-slate-700 active:scale-95 active:bg-slate-600" onclick="toggleHelp(this, 'Rescue')">
-                            <i class="fa-solid fa-helicopter text-xl text-blue-400"></i>
-                            <span class="text-xs font-bold text-slate-300">Rescue</span>
+                            <i class="fa-solid fa-helicopter text-xl text-blue-400"></i> <span class="text-xs font-bold text-slate-300">Rescue</span>
                         </button>
-                        
                         <button type="button" class="help-btn p-3 rounded-xl bg-slate-800 border border-slate-600 flex flex-col items-center gap-2 transition-all hover:bg-slate-700 active:scale-95 active:bg-slate-600" onclick="toggleHelp(this, 'Supplies')">
-                            <i class="fa-solid fa-box-open text-xl text-amber-200"></i>
-                            <span class="text-xs font-bold text-slate-300">Supplies</span>
+                            <i class="fa-solid fa-box-open text-xl text-amber-200"></i> <span class="text-xs font-bold text-slate-300">Supplies</span>
                         </button>
                     </div>
-
                     <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">Headcount (Approx)</label>
-                    <input type="number" id="headcount" value="1" min="1" max="500" step="1" inputmode="numeric" 
-                           class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none" placeholder="1-500">
+                    <input type="number" id="headcount" value="1" min="1" max="500" step="1" inputmode="numeric" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none" placeholder="1-500">
                 </div>
-
+                
                 <input type="hidden" id="lat" value="0">
                 <input type="hidden" id="lng" value="0">
 
@@ -155,26 +137,13 @@
 
                 <div class="space-y-2">
                     <label class="text-sm font-semibold text-slate-400 uppercase tracking-wide">Photo Evidence</label>
-                    
                     <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
-                    
-                    <div id="camera-trigger" onclick="document.getElementById('cameraInput').click()" 
-                         class="border-2 border-dashed border-slate-600 bg-slate-800/50 hover:bg-slate-800 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all group">
-                        
-                        <div class="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center group-hover:bg-blue-600 transition-colors">
-                            <i class="fa-solid fa-camera text-xl text-white"></i>
-                        </div>
-                        <div class="text-center">
-                            <p class="text-sm font-bold text-slate-300">Tap to Capture</p>
-                            <p class="text-xs text-slate-500">JPG, PNG up to 5MB</p>
-                        </div>
+                    <div id="camera-trigger" onclick="document.getElementById('cameraInput').click()" class="border-2 border-dashed border-slate-600 bg-slate-800/50 hover:bg-slate-800 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all group">
+                        <div class="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center group-hover:bg-blue-600 transition-colors"><i class="fa-solid fa-camera text-xl text-white"></i></div>
+                        <div class="text-center"><p class="text-sm font-bold text-slate-300">Tap to Capture</p><p class="text-xs text-slate-500">JPG, PNG up to 5MB</p></div>
                     </div>
-
                     <div id="preview-area" class="hidden mt-3 relative rounded-xl overflow-hidden border border-slate-600">
                         <img id="preview-img" class="w-full h-48 object-cover">
-                        <div class="absolute bottom-0 left-0 right-0 bg-black/60 p-2 text-center text-xs text-green-400 font-bold backdrop-blur-sm">
-                            <i class="fa-solid fa-check-circle"></i> Image Compressed & Attached
-                        </div>
                         <button type="button" onclick="clearImage()" class="absolute top-2 right-2 bg-red-600 text-white w-6 h-6 rounded-full text-xs shadow-lg">✕</button>
                     </div>
                 </div>
@@ -182,30 +151,25 @@
                 <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 py-4 rounded-xl font-bold text-lg shadow-lg shadow-blue-900/30 flex items-center justify-center gap-2 transition-transform transform active:scale-95 border-t border-blue-400/20">
                     <i class="fa-solid fa-paper-plane"></i> SUBMIT REPORT
                 </button>
-
                 <button type="button" onclick="sendSMS()" class="w-full bg-slate-800 hover:bg-slate-700 py-3 rounded-xl font-bold text-sm text-slate-400 shadow-lg flex items-center justify-center gap-2 transition-transform transform active:scale-95 border border-slate-700">
                     <i class="fa-solid fa-comment-sms"></i> NO INTERNET? SEND VIA SMS
                 </button>
-
             </form>
 
             <div id="status-feed" class="hidden mt-6 bg-slate-800/80 rounded-xl border border-slate-600 p-4 animate-fade-in">
                 <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Live Updates</h3>
-                <div id="my-reports-list" class="space-y-2">
-                    </div>
+                <div id="my-reports-list" class="space-y-2"></div>
             </div>
 
             <div class="text-center pb-8 opacity-60">
                 <p class="text-[10px] uppercase font-bold text-slate-500">Offline Queue</p>
                 <p class="text-2xl font-black text-slate-400" id="queue-count">0</p>
             </div>
-            
         </div>
     </div>
 
     <script src="app.js"></script>
     <script>
-        // Register Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
         }
