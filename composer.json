@@ -1,6 +1,6 @@
 {
     "require": {
-        "php": "^8.0",
+        "php": "*",
         "ext-pdo": "*",
         "ext-pdo_mysql": "*"
     }
