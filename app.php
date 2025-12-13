@@ -14,7 +14,7 @@
         .help-btn.active { background-color: #2563eb; border-color: #2563eb; color: white; }
     </style>
     <script>
-        // SECURITY CHECK
+        // SECURITY CHECK: Redirect to login if no auth token found
         if (!localStorage.getItem('aegis_auth')) {
             window.location.href = 'index.php';
         }
@@ -40,7 +40,7 @@
             
             <div class="mt-4 flex items-center gap-2 text-xs font-bold text-blue-200 bg-blue-800/40 w-fit px-3 py-1 rounded-full border border-blue-400/30 backdrop-blur-md">
                 <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-                ID: <span id="display-badge">...</span>
+                ID: <span id="display-badge">Loading...</span>
             </div>
         </div>
 
@@ -100,14 +100,17 @@
                             <i class="fa-solid fa-truck-medical text-xl text-red-400"></i>
                             <span class="text-xs font-bold text-slate-300">Medical</span>
                         </button>
+                        
                         <button type="button" class="help-btn p-3 rounded-xl bg-slate-800 border border-slate-600 flex flex-col items-center gap-2 transition-all hover:bg-slate-700" onclick="toggleHelp(this, 'Trapped')">
-                            <i class="fa-solid fa-person-falling-burst text-xl text-orange-400"></i>
-                            <span class="text-xs font-bold text-slate-300">Trapped</span>
+                            <i class="fa-solid fa-life-ring text-xl text-pink-500"></i>
+                            <span class="text-xs font-bold text-slate-300">Trapped (SOS)</span>
                         </button>
+                        
                         <button type="button" class="help-btn p-3 rounded-xl bg-slate-800 border border-slate-600 flex flex-col items-center gap-2 transition-all hover:bg-slate-700" onclick="toggleHelp(this, 'Rescue')">
                             <i class="fa-solid fa-helicopter text-xl text-blue-400"></i>
                             <span class="text-xs font-bold text-slate-300">Rescue</span>
                         </button>
+                        
                         <button type="button" class="help-btn p-3 rounded-xl bg-slate-800 border border-slate-600 flex flex-col items-center gap-2 transition-all hover:bg-slate-700" onclick="toggleHelp(this, 'Supplies')">
                             <i class="fa-solid fa-box-open text-xl text-amber-200"></i>
                             <span class="text-xs font-bold text-slate-300">Supplies</span>
@@ -161,27 +164,29 @@
         </div>
     </div>
 
-<script src="app.js"></script>
+    <script src="app.js"></script>
     <script>
-        // --- 1. SETUP ---
-        document.getElementById('display-badge').innerText = localStorage.getItem('aegis_user') || 'Unknown';
-        
-        // Register Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
-        }
+        // --- INLINE UI LOGIC ---
 
+        // 1. FIX: Display ID on Load
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = localStorage.getItem('aegis_user');
+            if(document.getElementById('display-badge')) {
+                document.getElementById('display-badge').innerText = user || 'Unknown';
+            }
+        });
+
+        // 2. FIX: Logout Redirect
         function logout() {
             if(confirm("End Session?")) {
                 localStorage.removeItem('aegis_auth');
                 localStorage.removeItem('aegis_user');
+                // Force Redirect to Index
                 window.location.href = 'index.php';
             }
         }
-
-        // --- 2. REAL-TIME DATA PACKER ---
-        // We update the hidden input INSTANTLY whenever you touch anything.
         
+        // --- REAL-TIME DATA PACKER ---
         let activeHelp = []; 
 
         function updateHiddenData() {
@@ -200,20 +205,15 @@
                 finalType += " (" + count + " Pax)";
             }
             
-            // UPDATE HIDDEN INPUT IMMEDIATELY
+            // UPDATE HIDDEN INPUT
             document.getElementById('type').value = finalType;
-            console.log("Data Ready to Send:", finalType); 
         }
 
-        // --- 3. UI INTERACTION LOGIC ---
-
-        // Dropdown Change
+        // --- EVENTS ---
         document.getElementById('type-select').addEventListener('change', updateHiddenData);
-        
-        // Headcount Change
         document.getElementById('headcount').addEventListener('input', updateHiddenData);
 
-        // Severity Bubbles
+        // Severity
         function setSeverity(val) {
             document.getElementById('severity').value = val;
             document.getElementById('sev-display').innerText = val;
@@ -227,7 +227,7 @@
             });
         }
 
-        // Assistance Buttons
+        // Assistance
         function toggleHelp(btn, type) {
             if(activeHelp.includes(type)) {
                 activeHelp = activeHelp.filter(i => i !== type);
@@ -238,19 +238,21 @@
                 btn.classList.remove('bg-slate-800', 'border-slate-600');
                 btn.classList.add('active', 'bg-blue-600', 'border-blue-500');
             }
-            
-            // Trigger Update Immediately
             updateHiddenData();
         }
 
-        // 4. Image Logic
+        // Image
         function clearImage() {
             document.getElementById('cameraInput').value = "";
             document.getElementById('preview-area').classList.add('hidden');
         }
 
-        // Initial Run to set default values
+        // Init
         updateHiddenData();
+        // Register SW
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+        }
     </script>
 </body>
 </html>
