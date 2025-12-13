@@ -14,7 +14,7 @@ const ASSETS = [
 // 1. Install Phase (The Critical Part)
 self.addEventListener("install", (event) => {
     console.log("[SW] Installing... Starting Cache.");
-    
+
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             // We use 'return' to make sure the promise completes
@@ -52,10 +52,13 @@ self.addEventListener("fetch", (event) => {
         fetch(event.request)
             .then((response) => {
                 // If network works, return response AND update cache
-                const resClone = response.clone();
-                caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(event.request, resClone);
-                });
+                // CHECK SCHEME: Only cache http and https
+                if (event.request.url.startsWith('http')) {
+                    const resClone = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, resClone);
+                    });
+                }
                 return response;
             })
             .catch(() => {
