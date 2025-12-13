@@ -44,8 +44,8 @@ if (document.getElementById('login-form')) {
 }
 
 function showApp(badge) {
-    loginView.classList.add('hidden');
-    appView.classList.remove('hidden');
+    if(loginView) loginView.classList.add('hidden');
+    if(appView) appView.classList.remove('hidden');
     if (document.getElementById('display-badge')) document.getElementById('display-badge').innerText = badge;
     // Trigger initial data pack
     updateHiddenData();
@@ -104,7 +104,6 @@ function updateHiddenData() {
 
     // UPDATE HIDDEN INPUT IMMEDIATELY
     typeHidden.value = finalType;
-    console.log("Data Ready to Send:", finalType);
 }
 
 // Global Functions for HTML onclick events
@@ -193,7 +192,7 @@ window.sendSMS = function () {
 
     // 3. Open SMS App (Universal Link)
     // Replace 119 or local urgency number
-    const phone = "119";
+    const phone = "0771234567"; // Change this to Admin Number
 
     // Detect iOS vs Android for separator
     const separator = navigator.userAgent.match(/iPhone|iPad|iPod/i) ? '&' : '?';
@@ -277,6 +276,7 @@ if (form) {
 
         const report = {
             uuid: crypto.randomUUID(),
+            username: localStorage.getItem('aegis_user') || 'Unknown', // <--- FIXED: SENDS USERNAME NOW
             type: document.getElementById('type').value, // This now contains the packed data
             severity: document.getElementById('severity').value,
             lat: document.getElementById('lat').value,

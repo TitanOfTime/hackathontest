@@ -182,9 +182,13 @@ if (!isset($_SESSION['admin_auth'])):
         // --- ACTION: DISPATCH (IN PROGRESS) ---
         async function markInProgress(id) {
             try {
+                // 1. Send command to DB
                 const res = await fetch('progress.php', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id: id}) });
-                updateDashboard(); 
-            } catch(e) {}
+                
+                // 2. CLOSE THE POPUP (This unpauses the map and triggers the auto-update)
+                map.closePopup(); 
+                
+            } catch(e) { console.error(e); }
         }
 
         // --- ACTION: DELETE ---
