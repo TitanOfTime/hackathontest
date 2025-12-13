@@ -169,12 +169,13 @@
         // --- INLINE UI LOGIC ---
 
         // 1. FIX: Display ID on Load
-        document.addEventListener('DOMContentLoaded', () => {
+        (function() {
             const user = localStorage.getItem('aegis_user');
-            if(document.getElementById('display-badge')) {
-                document.getElementById('display-badge').innerText = user || 'Unknown';
+            const badge = document.getElementById('display-badge');
+            if(badge) {
+                badge.innerText = user || 'Unknown';
             }
-        });
+        })();
 
         // 2. FIX: Logout Redirect
         function logout() {
