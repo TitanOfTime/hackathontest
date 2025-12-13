@@ -38,7 +38,7 @@
 
             <div class="flex justify-between items-start relative z-10">
                 <div>
-                    <h1 class="text-4xl font-black text-white tracking-tighter drop-shadow-sm">Incidents</h1>
+                    <h1 class="text-4xl font-black text-white tracking-tighter drop-shadow-sm">Aegis Responder</h1>
                     <p class="text-blue-200 text-sm font-medium mt-1 tracking-wide">Rapid Response Unit</p>
                 </div>
                 <button onclick="logout()" class="bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-md transition-all border border-white/10 shadow-lg active:scale-95">
