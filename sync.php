@@ -1,7 +1,7 @@
 <?php
-// sync.php - DIAGNOSTIC VERSION
+// sync.php - FIXED ERROR REPORTING
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *'); // Allow from any domain (fixes some Railway issues)
+header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
@@ -13,7 +13,7 @@ if (!file_exists('db.php')) {
 }
 require 'db.php';
 
-// 2. Error Handling (Prevent HTML Errors messing up JSON)
+// 2. Error Handling
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
@@ -23,15 +23,12 @@ try {
     $data = json_decode($json, true);
 
     if (!$data) {
+        http_response_code(400); // Bad Request
         echo json_encode(["status" => "error", "message" => "No JSON data received"]);
         exit;
     }
 
     // 4. THE INSERT COMMAND
-    // We map your Javascript variable names (left) to Database Column names (right)
-    // Javascript: uuid, username, type, severity, lat, lng, timestamp, image
-    // Database:   client_uuid, username, incident_type, severity, latitude, longitude, reported_at, image_data, status
-    
     $sql = "INSERT INTO incidents (
                 client_uuid, 
                 username, 
@@ -65,16 +62,15 @@ try {
     echo json_encode(["status" => "success", "synced" => $savedCount]);
 
 } catch (PDOException $e) {
-    // CAPTURE SQL ERROR
-    // This will tell us exactly which column is missing
-    http_response_code(200); // Send as 200 OK so Javascript can read the error message
+    // CRITICAL FIX: Send 500 error so JS knows to KEEP the data
+    http_response_code(500); 
     echo json_encode([
         "status" => "sql_error",
         "message" => $e->getMessage()
     ]);
 } catch (Exception $e) {
-    // CAPTURE GENERIC ERROR
-    http_response_code(200);
+    // CRITICAL FIX: Send 500 error
+    http_response_code(500);
     echo json_encode([
         "status" => "php_error",
         "message" => $e->getMessage()
