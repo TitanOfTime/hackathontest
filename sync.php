@@ -28,7 +28,24 @@ try {
         exit;
     }
 
+    // --- AUTO-FIX DATABASE SCHEMA (Self-Healing) ---
+    function checkAndFix($conn, $col, $def) {
+        try {
+            $conn->query("SELECT $col FROM incidents LIMIT 1");
+        } catch (Exception $e) {
+            try { return $conn->exec("ALTER TABLE incidents ADD COLUMN $col $def"); } catch (Exception $ex) {}
+        }
+    }
+    checkAndFix($conn, 'username', "VARCHAR(100) NOT NULL DEFAULT 'Unknown'");
+    checkAndFix($conn, 'client_uuid', "VARCHAR(100) NOT NULL DEFAULT '0'");
+    checkAndFix($conn, 'status', "VARCHAR(20) NOT NULL DEFAULT 'active'");
+    // -----------------------------------------------
+
     // 4. THE INSERT COMMAND
+    // We map your Javascript variable names (left) to Database Column names (right)
+    // Javascript: uuid, username, type, severity, lat, lng, timestamp, image
+    // Database:   client_uuid, username, incident_type, severity, latitude, longitude, reported_at, image_data, status
+    
     $sql = "INSERT INTO incidents (
                 client_uuid, 
                 username, 
