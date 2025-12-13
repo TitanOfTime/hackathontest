@@ -134,6 +134,14 @@ if (!isset($_SESSION['admin_auth'])):
     </div>
 
     <script>
+        // SANITIZE INPUT: Prevents hackers from injecting HTML/JS code
+        function safe(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str; // converting HTML to plain text
+            return div.innerHTML;
+        }
+
         // 1. Init Map
         const map = L.map('map', { zoomControl: false }).setView([20, 0], 2);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap', maxZoom: 20 }).addTo(map);
@@ -194,32 +202,37 @@ if (!isset($_SESSION['admin_auth'])):
                 const res = await fetch('fetch.php');
                 const data = await res.json();
                 
-                map.eachLayer((layer) => { 
-                    if (!!layer.toGeoJSON && !layer._url) map.removeLayer(layer); 
-                });
-                
-                const markers = L.markerClusterGroup();
+                map.eachLayer((layer) => { if (!!layer.toGeoJSON) map.removeLayer(layer); });
+                const markers = L.featureGroup();
                 let critical = 0, activeCount = 0, feedHTML = '', historyHTML = '';
 
                 data.forEach((inc) => {
                     const localTime = formatTime(inc.reported_at);
                     
-                    // PARSE THE PACKED DATA
+                    // PARSE DATA
                     const info = parseIncidentData(inc.incident_type);
                     
-                    // Generate Badge HTML
-                    let badgesHtml = info.tags.map(t => `<span class="bg-blue-100 text-blue-700 px-1 rounded text-[10px] font-bold border border-blue-200 mr-1">${t}</span>`).join('');
-                    if(info.count) badgesHtml += `<span class="bg-gray-800 text-white px-1 rounded text-[10px] font-bold border border-gray-600 mr-1"><i class="fa-solid fa-user"></i> ${info.count}</span>`;
+                    // --- SECURITY: SANITIZE EVERYTHING ---
+                    const safeType = safe(info.type);
+                    const safeId = safe(inc.id);
+                    const safeSev = safe(inc.severity);
+                    const safeTags = info.tags.map(t => safe(t)); // Clean the array
+                    const safeCount = safe(info.count);
+                    // -------------------------------------
+
+                    // Generate Badge HTML (Using Clean Data)
+                    let badgesHtml = safeTags.map(t => `<span class="bg-blue-100 text-blue-700 px-1 rounded text-[10px] font-bold border border-blue-200 mr-1">${t}</span>`).join('');
+                    if(safeCount) badgesHtml += `<span class="bg-gray-800 text-white px-1 rounded text-[10px] font-bold border border-gray-600 mr-1"><i class="fa-solid fa-user"></i> ${safeCount}</span>`;
 
                     if (inc.status === 'resolved') {
-                        // --- HISTORY ITEM WITH DELETE BUTTON ---
+                        // RESOLVED
                         historyHTML += `
                             <div class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm opacity-75 group hover:opacity-100 transition-all">
                                 <div class="flex justify-between items-start mb-1">
-                                    <span class="font-bold text-gray-700 line-through text-xs">${info.type}</span>
+                                    <span class="font-bold text-gray-700 line-through text-xs">${safeType}</span>
                                     <div class="flex gap-1">
                                         <span class="bg-gray-200 text-gray-600 text-[10px] font-bold px-2 py-1 rounded uppercase">Done</span>
-                                        <button onclick="deleteIncident(${inc.id})" class="bg-red-100 hover:bg-red-500 text-red-500 hover:text-white rounded px-2 py-0.5 transition-colors" title="Delete Permanently">
+                                        <button onclick="deleteIncident(${safeId})" class="bg-red-100 hover:bg-red-500 text-red-500 hover:text-white rounded px-2 py-0.5 transition-colors">
                                             <i class="fa-solid fa-trash text-[10px]"></i>
                                         </button>
                                     </div>
@@ -229,58 +242,40 @@ if (!isset($_SESSION['admin_auth'])):
                             </div>
                         `;
                     } else {
-                        // --- ACTIVE ITEM ---
+                        // ACTIVE
                         activeCount++;
                         if(inc.severity >= 4) critical++;
                         let iconToUse = (inc.severity >= 4) ? redIcon : blueIcon;
+                        
+                        // HEATMAP / GHOST EFFECT (Opacity 0.8)
+                        const marker = L.marker([inc.latitude, inc.longitude], {icon: iconToUse, opacity: 0.8});
+                        
                         let imageHtml = (inc.image_data && inc.image_data.length > 100) ? `<div class="mt-2"><img src="${inc.image_data}" class="w-full h-32 object-cover rounded-lg border border-gray-200"></div>` : '';
                         
-                        const marker = L.marker([inc.latitude, inc.longitude], {icon: iconToUse});
+                        // POPUP (Using Safe Data)
                         marker.bindPopup(`
                             <div class="text-center min-w-[200px] font-sans">
-                                <strong class="text-sm uppercase tracking-wide text-gray-500">${info.type}</strong><br>
-                                <div class="text-lg font-bold ${inc.severity >= 4 ? 'text-red-600' : 'text-blue-600'}">Severity Level ${inc.severity}</div>
+                                <strong class="text-sm uppercase tracking-wide text-gray-500">${safeType}</strong><br>
+                                <div class="text-lg font-bold ${inc.severity >= 4 ? 'text-red-600' : 'text-blue-600'}">Severity Level ${safeSev}</div>
                                 <div class="my-2">${badgesHtml}</div>
                                 <div class="text-xs text-gray-500 font-bold mb-2">🕒 ${localTime}</div>
                                 ${imageHtml}
-                                <button onclick="resolveIncident(${inc.id})" class="mt-3 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow text-sm">✅ Mark Resolved</button>
+                                <button onclick="resolveIncident(${safeId})" class="mt-3 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow text-sm">✅ Mark Resolved</button>
                             </div>
                         `);
-                        markers.addLayer(marker);
+                        marker.addTo(markers);
 
-                        // --- FILTER LOGIC FOR SIDEBAR ---
-                        // Rule 1: Severity > 3 (4 or 5)
-                        // Rule 2: Assistance in [Medical, Rescue, Trapped (SOS)]
-                        // Rule 3: Supplies ONLY if Severity == 5
-                        const sev = parseInt(inc.severity);
-                        const type = info.type; // "Medical Assistance", "Rescue", etc.
-                        
-                        // Check strict types (partial match safe? User gave specific strings)
-                        // "Medical", "Rescue", "Trapped (SOS)"
-                        // Let's do partial includes checking to be safe with "Medical Assistance" vs "Medical"
-                        const isUrgentType = type.includes('Medical') || type.includes('Rescue') || type.includes('Trapped');
-                        const isSupplies = type.includes('Supplies');
-                        
-                        let showInSidebar = false;
-
-                        if (sev >= 4) {
-                             if (isUrgentType) {
-                                 showInSidebar = true;
-                             } else if (isSupplies && sev === 5) {
-                                 showInSidebar = true;
-                             }
-                        }
-
-                        if (showInSidebar) {
+                        if (activeCount <= 20) {
+                            // FEED ITEM (Using Safe Data)
                             feedHTML += `
                                 <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="map.flyTo([${inc.latitude}, ${inc.longitude}], 15)">
                                     <div class="flex justify-between items-start">
                                         <div>
-                                            <p class="font-bold text-gray-800 text-sm">${info.type}</p>
+                                            <p class="font-bold text-gray-800 text-sm">${safeType}</p>
                                             <div class="mt-1">${badgesHtml}</div>
-                                            <p class="text-xs text-gray-500 mt-1">🕒 ${localTime} • ID: #${inc.id}</p>
+                                            <p class="text-xs text-gray-500 mt-1">🕒 ${localTime} • ID: #${safeId}</p>
                                         </div>
-                                        <span class="${inc.severity >= 4 ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'} text-[10px] font-bold px-2 py-1 rounded">LVL ${inc.severity}</span>
+                                        <span class="${inc.severity >= 4 ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'} text-[10px] font-bold px-2 py-1 rounded">LVL ${safeSev}</span>
                                     </div>
                                 </div>
                             `;
@@ -288,8 +283,8 @@ if (!isset($_SESSION['admin_auth'])):
                     }
                 });
                 
-                map.addLayer(markers);
-                document.getElementById('feed-list').innerHTML = feedHTML || '<div class="p-4 text-center text-gray-400 text-sm">No priority incidents</div>';
+                markers.addTo(map);
+                document.getElementById('feed-list').innerHTML = feedHTML || '<div class="p-4 text-center text-gray-400 text-sm">No active incidents</div>';
                 document.getElementById('history-list').innerHTML = historyHTML || '<div class="p-4 text-center text-gray-400 text-sm">No mission history yet</div>';
                 document.getElementById('total-count').innerText = activeCount;
                 document.getElementById('crit-count').innerText = critical;
