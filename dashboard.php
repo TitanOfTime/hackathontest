@@ -174,9 +174,38 @@ if (!isset($_SESSION['admin_auth'])):
             <span class="text-xl">📊</span> Analytics & Stats
         </a>
 
+        <button onclick="sendBroadcast()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg flex items-center gap-2 transition-transform transform active:scale-95 mb-2 animate-pulse">
+            <span class="text-xl">📢</span> BROADCAST ALERT
+        </button>
+
         <a href="app.php" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg flex items-center gap-2 transition-transform transform active:scale-95">
             <span class="text-xl">+</span> New Report
         </a>
+        
+        <script>
+            async function sendBroadcast() {
+                const msg = prompt("📢 EMERGENCY BROADCAST SYSTEM\n\nEnter alert message to send to ALL active units:", "Heavy Rain expected. Move to higher ground.");
+                if(msg) {
+                    if(confirm("⚠️ ARE YOU SURE?\n\nThis will trigger a RED ALERT on all user devices immediately.")) {
+                        try {
+                            const res = await fetch('broadcast_api.php', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({ message: msg })
+                            });
+                            const data = await res.json();
+                            if(data.status === 'success') {
+                                alert("✅ Broadcast Sent Successfully");
+                            } else {
+                                alert("❌ Error: " + data.msg);
+                            }
+                        } catch(e) {
+                            alert("❌ Network Error");
+                        }
+                    }
+                }
+            }
+        </script>
         
         <div class="glass-panel p-2 rounded-xl flex flex-col gap-2">
             <button onclick="map.setView([20,0], 2)" class="p-2 hover:bg-gray-100 rounded-lg text-gray-600">🌍</button>

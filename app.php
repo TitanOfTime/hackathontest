@@ -168,11 +168,63 @@
         </div>
     </div>
 
+    <!-- EMERGENCY OVERLAY -->
+    <div id="emergency-alert" class="fixed inset-0 z-[999] bg-red-600/90 backdrop-blur-md hidden flex flex-col items-center justify-center p-8 text-center animate-fade-in">
+        <div class="bg-white/10 p-6 rounded-full mb-6 border-4 border-white animate-pulse">
+            <i class="fa-solid fa-bullhorn text-5xl text-white"></i>
+        </div>
+        <h1 class="text-4xl font-black text-white mb-2 uppercase tracking-tighter drop-shadow-lg">Emergency Alert</h1>
+        <div class="w-24 h-1 bg-white mx-auto mb-6 rounded-full"></div>
+        <p class="text-xl font-bold text-white mb-8 max-w-sm leading-relaxed" id="alert-msg">...</p>
+        <button onclick="dismissAlert()" class="bg-white text-red-600 px-8 py-3 rounded-xl font-black text-lg shadow-xl active:scale-95 transition-transform uppercase">
+            I Understand
+        </button>
+        <p class="mt-8 text-white/50 text-xs font-mono" id="alert-time">...</p>
+    </div>
+
     <script src="app.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
         }
+
+        // --- BROADCAST POLLING ---
+        let lastAlertTime = localStorage.getItem('last_alert_seen') || 0;
+
+        async function checkBroadcast() {
+            try {
+                const res = await fetch('broadcast_api.php?t=' + Date.now()); // Prevent caching
+                const data = await res.json();
+                
+                if (data.active && data.message) {
+                    if (data.timestamp > lastAlertTime) {
+                        // New Alert!
+                        document.getElementById('alert-msg').innerText = data.message;
+                        document.getElementById('alert-time').innerText = "Issued: " + new Date(data.timestamp * 1000).toLocaleTimeString();
+                        document.getElementById('emergency-alert').classList.remove('hidden');
+                        
+                        // Vibrate phone if supported
+                        if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 1000]);
+                        
+                        // Store temporarily so we know THIS specific alert is currently being shown
+                        window.currentAlertTimestamp = data.timestamp;
+                    }
+                }
+            } catch(e) { console.log("Connection check skipped"); }
+        }
+
+        function dismissAlert() {
+            document.getElementById('emergency-alert').classList.add('hidden');
+            // Save that we've seen this alert
+            if (window.currentAlertTimestamp) {
+                lastAlertTime = window.currentAlertTimestamp;
+                localStorage.setItem('last_alert_seen', lastAlertTime);
+            }
+        }
+
+        // Poll every 10 seconds
+        setInterval(checkBroadcast, 10000);
+        checkBroadcast(); // Initial check
     </script>
 </body>
 </html>
