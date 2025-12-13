@@ -56,9 +56,11 @@ if (!isset($_SESSION['admin_auth'])):
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
     <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+    
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
@@ -120,7 +122,6 @@ if (!isset($_SESSION['admin_auth'])):
         </div>
     </div>
 
-
     <div class="absolute top-6 right-6 z-10 flex flex-col gap-3 items-end">
         <a href="?logout=true" class="bg-red-900/80 hover:bg-red-800 text-red-200 px-4 py-2 rounded-lg font-bold text-xs backdrop-blur border border-red-700/50 mb-2">🔒 LOGOUT</a>
         
@@ -134,14 +135,12 @@ if (!isset($_SESSION['admin_auth'])):
         </div>
     </div>
 
-    <!-- REMOVED RIGHT SIDEBAR CONTAINER -->
-
     <script>
         // SANITIZE INPUT: Prevents hackers from injecting HTML/JS code
         function safe(str) {
             if (!str) return '';
             const div = document.createElement('div');
-            div.textContent = str; // converting HTML to plain text
+            div.textContent = str; 
             return div.innerHTML;
         }
 
@@ -150,16 +149,22 @@ if (!isset($_SESSION['admin_auth'])):
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap', maxZoom: 20 }).addTo(map);
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
+        // GLOBAL CLUSTER GROUP (For smoother updates)
+        const clusterGroup = L.markerClusterGroup();
+        map.addLayer(clusterGroup);
+
         let isPaused = false;
         map.on('popupopen', () => isPaused = true);
         map.on('popupclose', () => { 
             isPaused = false; 
-            updateDashboard(); // Immediately update when closed to catch up
+            updateDashboard(); 
         });
 
         // 2. Icons
         const redIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
         const blueIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
+        // ORANGE ICON (For In Progress)
+        const orangeIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
 
         let firstLoad = true;
         function formatTime(isoString) { if (!isoString) return 'Unknown'; const date = new Date(isoString); return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
@@ -174,7 +179,15 @@ if (!isset($_SESSION['admin_auth'])):
             } catch(e) {}
         }
 
-        // --- NEW ACTION: DELETE ---
+        // --- ACTION: DISPATCH (IN PROGRESS) ---
+        async function markInProgress(id) {
+            try {
+                const res = await fetch('progress.php', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id: id}) });
+                updateDashboard(); 
+            } catch(e) {}
+        }
+
+        // --- ACTION: DELETE ---
         async function deleteIncident(id) {
             if(!confirm('⚠️ PERMANENTLY DELETE this record? This cannot be undone.')) return;
             try {
@@ -184,20 +197,18 @@ if (!isset($_SESSION['admin_auth'])):
             } catch(e) { console.error(e); }
         }
 
-        // --- THE UNPACKER LOGIC ---
+        // --- DATA PARSER ---
         function parseIncidentData(rawType) {
             let type = rawType;
             let tags = [];
             let count = null;
 
-            // Extract [...]
             const tagMatch = type.match(/\[(.*?)\]/);
             if(tagMatch) {
                 tags = tagMatch[1].split(',').map(s => s.trim());
                 type = type.replace(/\[.*?\]/, '');
             }
 
-            // Extract (...)
             const countMatch = type.match(/\((.*?) Pax\)/);
             if(countMatch) {
                 count = countMatch[1];
@@ -217,25 +228,23 @@ if (!isset($_SESSION['admin_auth'])):
                 const searchEl = document.getElementById('search-input');
                 const filterTerm = searchEl ? searchEl.value.toLowerCase().trim() : '';
 
-                map.eachLayer((layer) => { if (!!layer.toGeoJSON) map.removeLayer(layer); });
-                const markers = L.markerClusterGroup();
+                // CLEAR CLUSTERS
+                clusterGroup.clearLayers();
+
                 let critical = 0, activeCount = 0, sidebarCount = 0, feedHTML = '', historyHTML = '';
 
                 data.forEach((inc) => {
                     const localTime = formatTime(inc.reported_at);
-                    
-                    // PARSE DATA
                     const info = parseIncidentData(inc.incident_type);
                     
-                    // --- SECURITY: SANITIZE EVERYTHING ---
+                    // --- SANITIZE ---
                     const safeType = safe(info.type);
                     const safeId = safe(inc.id);
                     const safeSev = safe(inc.severity);
-                    const safeTags = info.tags.map(t => safe(t)); // Clean the array
+                    const safeTags = info.tags.map(t => safe(t));
                     const safeCount = safe(info.count);
-                    // -------------------------------------
 
-                    // Generate Badge HTML (Using Clean Data)
+                    // --- BADGES ---
                     let badgesHtml = safeTags.map(t => `<span class="bg-blue-100 text-blue-700 px-1 rounded text-[10px] font-bold border border-blue-200 mr-1">${t}</span>`).join('');
                     if(safeCount) badgesHtml += `<span class="bg-gray-800 text-white px-1 rounded text-[10px] font-bold border border-gray-600 mr-1"><i class="fa-solid fa-user"></i> ${safeCount}</span>`;
 
@@ -260,43 +269,50 @@ if (!isset($_SESSION['admin_auth'])):
                         // ACTIVE
                         activeCount++;
                         if(inc.severity >= 4) critical++;
-                        let iconToUse = (inc.severity >= 4) ? redIcon : blueIcon;
                         
-                        // HEATMAP / GHOST EFFECT (Opacity 0.8)
-                        const marker = L.marker([inc.latitude, inc.longitude], {icon: iconToUse, opacity: 0.8});
+                        // --- STATUS CHECK ---
+                        const isInProgress = (inc.status === 'in_progress');
+                        
+                        // Choose Icon
+                        let iconToUse = isInProgress ? orangeIcon : (inc.severity >= 4 ? redIcon : blueIcon);
+                        
+                        // Action Buttons Logic
+                        let actionButtons = '';
+                        if(!isInProgress) actionButtons += `<button onclick="markInProgress(${safeId})" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg shadow text-sm mb-2">🚀 Dispatch Team</button>`;
+                        actionButtons += `<button onclick="resolveIncident(${safeId})" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow text-sm">✅ Mark Resolved</button>`;
+
+                        // Create Marker (Ghost Effect)
+                        const marker = L.marker([inc.latitude, inc.longitude], {icon: iconToUse, opacity: 0.9});
                         
                         let imageHtml = (inc.image_data && inc.image_data.length > 100) ? `<div class="mt-2"><img src="${inc.image_data}" class="w-full h-32 object-cover rounded-lg border border-gray-200"></div>` : '';
                         
-                        // POPUP (Using Safe Data)
+                        // Popup
                         marker.bindPopup(`
                             <div class="text-center min-w-[200px] font-sans">
                                 <strong class="text-sm uppercase tracking-wide text-gray-500">${safeType}</strong><br>
                                 <div class="text-lg font-bold ${inc.severity >= 4 ? 'text-red-600' : 'text-blue-600'}">Severity Level ${safeSev}</div>
+                                
+                                ${isInProgress ? '<div class="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-1 rounded my-1 border border-orange-200 uppercase">⚠️ Response Team En Route</div>' : ''}
+                                
                                 <div class="my-2">${badgesHtml}</div>
                                 <div class="text-xs text-gray-500 font-bold mb-2">🕒 ${localTime}</div>
                                 ${imageHtml}
-                                <button onclick="resolveIncident(${safeId})" class="mt-3 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow text-sm">✅ Mark Resolved</button>
+                                <div class="mt-3">${actionButtons}</div>
                             </div>
                         `);
-                        marker.addTo(markers);
+                        
+                        // Add to Cluster Group
+                        clusterGroup.addLayer(marker);
 
-                        // --- FILTER LOGIC FOR SIDEBAR (UPDATED) ---
-                        // Rule 1: Severity > 3 (4 or 5) OR
-                        // Rule 2: Assistance in [Medical, Rescue, Trapped (SOS)]
+                        // --- SIDEBAR FILTER LOGIC ---
                         const sev = parseInt(inc.severity);
-                        const fullType = inc.incident_type; // Check FULL string (including tags)
+                        const fullType = inc.incident_type;
                         
                         const isUrgentType = fullType.includes('Medical') || fullType.includes('Rescue') || fullType.includes('Trapped');
-                        const isSupplies = fullType.includes('Supplies');
-                        
-                        // --- FILTER LOGIC (UPDATED) ---
-                        // Default: Show High Sev OR Urgent.
-                        // Override: If User Searches, show ANY match.
-
                         let showInSidebar = false;
 
-                        // 1. Default Priority Logic
-                        if (sev >= 4 || isUrgentType) {
+                        // 1. Priority Logic
+                        if (sev >= 4 || isUrgentType || isInProgress) { // Also show if In Progress
                             showInSidebar = true;
                         }
                         
@@ -304,22 +320,26 @@ if (!isset($_SESSION['admin_auth'])):
                         if (filterTerm) {
                             const searchableText = `${fullType} level ${sev} lvl ${sev}`.toLowerCase();
                             if (searchableText.includes(filterTerm)) {
-                                showInSidebar = true; // FORCE SHOW if search matches
+                                showInSidebar = true; 
                             } else {
-                                showInSidebar = false; // FORCE HIDE if search fails
+                                showInSidebar = false; 
                             }
                         }
 
                         if (showInSidebar && sidebarCount < 20) {
                             sidebarCount++;
-                            // FEED ITEM (Using Safe Data)
+                            
+                            // Styling for In Progress vs Normal
+                            const borderClass = isInProgress ? 'border-orange-400 bg-orange-50' : 'border-gray-100';
+                            const statusText = isInProgress ? '<span class="text-orange-600 font-bold">🚀 TEAM DISPATCHED</span>' : `🕒 ${localTime}`;
+
                             feedHTML += `
-                                <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="map.flyTo([${inc.latitude}, ${inc.longitude}], 15)">
+                                <div class="bg-white p-3 rounded-xl border ${borderClass} shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="map.flyTo([${inc.latitude}, ${inc.longitude}], 15)">
                                     <div class="flex justify-between items-start">
                                         <div>
                                             <p class="font-bold text-gray-800 text-sm">${safeType}</p>
                                             <div class="mt-1">${badgesHtml}</div>
-                                            <p class="text-xs text-gray-500 mt-1">🕒 ${localTime} • ID: #${safeId}</p>
+                                            <p class="text-xs text-gray-500 mt-1">${statusText} • ID: #${safeId}</p>
                                         </div>
                                         <span class="${inc.severity >= 4 ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'} text-[10px] font-bold px-2 py-1 rounded">LVL ${safeSev}</span>
                                     </div>
@@ -329,14 +349,13 @@ if (!isset($_SESSION['admin_auth'])):
                     }
                 });
                 
-                markers.addTo(map);
                 document.getElementById('feed-list').innerHTML = feedHTML || '<div class="p-4 text-center text-gray-400 text-sm">No active incidents</div>';
                 document.getElementById('history-list').innerHTML = historyHTML || '<div class="p-4 text-center text-gray-400 text-sm">No mission history yet</div>';
                 document.getElementById('total-count').innerText = activeCount;
                 document.getElementById('crit-count').innerText = critical;
 
                 if (firstLoad && activeCount > 0) {
-                    map.fitBounds(markers.getBounds(), { padding: [50, 50] });
+                    map.fitBounds(clusterGroup.getBounds(), { padding: [50, 50] });
                     firstLoad = false;
                 }
             } catch(e) { console.error(e); }
