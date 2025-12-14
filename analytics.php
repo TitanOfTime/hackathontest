@@ -80,13 +80,13 @@
 
         <!-- CHARTS ROW 1 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="glass-panel h-[350px] flex flex-col">
+            <div class="glass-panel h-[450px] flex flex-col">
                 <h3 class="font-bold text-gray-800 mb-2">Incident Types Overview</h3>
                 <div class="flex-1 relative">
                     <canvas id="typeChart"></canvas>
                 </div>
             </div>
-            <div class="glass-panel h-[350px] flex flex-col">
+            <div class="glass-panel h-[450px] flex flex-col">
                 <h3 class="font-bold text-gray-800 mb-2">Status Distribution</h3>
                 <div class="flex-1 relative flex justify-center items-center">
                     <canvas id="statusChart"></canvas>
