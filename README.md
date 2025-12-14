@@ -43,15 +43,6 @@ Aegis shifts the paradigm from "Online-First" to **"Offline-First."**
 * **Maps:** Leaflet.js + OpenStreetMap (Free, no API keys required).
 * **Offline Tech:** Service Workers (`sw.js`) for caching assets + `localStorage` for data persistence.
 
----
-
-## 📸 Screenshots
-
-| Field App (Offline) | Command Dashboard | Analytics & Resources |
-|:---:|:---:|:---:|
-| <img src="docs/mobile_app.png" width="200"> | <img src="docs/dashboard_map.png" width="300"> | <img src="docs/analytics.png" width="300"> |
-
----
 
 ## 🚀 Installation & Setup
 
