@@ -192,7 +192,7 @@ window.sendSMS = function () {
 
     // 3. Open SMS App (Universal Link)
     // Replace 119 or local urgency number
-    const phone = "0771234567"; // Change this to Admin Number
+    const phone = "119"; // Change this to Admin Number
 
     // Detect iOS vs Android for separator
     const separator = navigator.userAgent.match(/iPhone|iPad|iPod/i) ? '&' : '?';
@@ -397,11 +397,11 @@ async function checkMyReports() {
 
         if (reports.length > 0) {
             feed.classList.remove('hidden'); // Show the box
-            
+
             list.innerHTML = reports.map(r => {
                 // Clean up the text (remove tags like [Medical] for cleaner display)
                 let type = r.incident_type.replace(/\[.*?\]/, '').replace(/\(.*?\)/, '').trim();
-                if(type.length > 20) type = type.substring(0, 20) + '...';
+                if (type.length > 20) type = type.substring(0, 20) + '...';
 
                 // 3. DECIDE STATUS DISPLAY
                 if (r.status === 'in_progress') {
@@ -423,8 +423,8 @@ async function checkMyReports() {
         } else {
             feed.classList.add('hidden'); // Hide box if no active reports
         }
-    } catch (e) { 
-        console.log("Status check fail - retrying in 3s"); 
+    } catch (e) {
+        console.log("Status check fail - retrying in 3s");
     }
 }
 
