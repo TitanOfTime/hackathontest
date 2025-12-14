@@ -543,6 +543,10 @@ if (!isset($_SESSION['admin_auth'])):
                     // --- FILTER CHECK ---
                     // Applies only to MAP markers, lists are separate logic
                     let showOnMap = true;
+
+                    // HIDE RESOLVED FROM MAP
+                    if (inc.status === 'resolved') showOnMap = false;
+
                     if (currentFilter !== 'All') {
                         // Check if tags or type contains filter
                         const combinedTags = [...info.tags, info.type].join(' ');
