@@ -436,7 +436,10 @@ if (!isset($_SESSION['admin_auth'])):
             try {
                 const res = await fetch('resolve.php', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id: id}) });
                 const data = await res.json();
-                if(data.status === 'success') updateDashboard();
+                if(data.status === 'success') {
+                    map.closePopup(); // Close popup to unpause and trigger update
+                    updateDashboard();
+                }
             } catch(e) {}
         }
 
